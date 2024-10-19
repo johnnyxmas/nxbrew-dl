@@ -181,6 +181,23 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addItem(self.verticalSpacerConfigBottom)
 
+        self.labelDiscordURL = QLabel(self.centralwidget)
+        self.labelDiscordURL.setObjectName(u"labelDiscordURL")
+
+        self.verticalLayoutConfig.addWidget(self.labelDiscordURL)
+
+        self.lineEditDiscordURL = QLineEdit(self.centralwidget)
+        self.lineEditDiscordURL.setObjectName(u"lineEditDiscordURL")
+        sizePolicy1.setHeightForWidth(self.lineEditDiscordURL.sizePolicy().hasHeightForWidth())
+        self.lineEditDiscordURL.setSizePolicy(sizePolicy1)
+        self.lineEditDiscordURL.setEchoMode(QLineEdit.EchoMode.Normal)
+
+        self.verticalLayoutConfig.addWidget(self.lineEditDiscordURL)
+
+        self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayoutConfig.addItem(self.verticalSpacer_5)
+
 
         self.horizontalLayoutConfigGames.addLayout(self.verticalLayoutConfig)
 
@@ -365,6 +382,11 @@ class Ui_nxbrew_dl(object):
         self.checkBoxDownloadDLC.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"If available, will download DLCs", None))
 #endif // QT_CONFIG(statustip)
         self.checkBoxDownloadDLC.setText(QCoreApplication.translate("nxbrew_dl", u"Download DLCs", None))
+        self.labelDiscordURL.setText(QCoreApplication.translate("nxbrew_dl", u"Discord Webhook URL:", None))
+#if QT_CONFIG(statustip)
+        self.lineEditDiscordURL.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"Webhook URL for Discord", None))
+#endif // QT_CONFIG(statustip)
+        self.lineEditDiscordURL.setText("")
         self.labelSearch.setText(QCoreApplication.translate("nxbrew_dl", u"Search:", None))
         self.pushButtonRefresh.setText(QCoreApplication.translate("nxbrew_dl", u"Refresh", None))
         ___qtablewidgetitem = self.tableGames.horizontalHeaderItem(0)

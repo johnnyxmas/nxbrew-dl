@@ -55,9 +55,10 @@ def get_game_dict(
     url = urljoin(nxbrew_url, "Index/game-index/games/")
 
     # Load in the HTML
-    game_html = get_html_page(url,
-                              cache_filename="game_index.html",
-                              )
+    game_html = get_html_page(
+        url,
+        cache_filename="game_index.html",
+    )
     index = game_html.find("div", {"id": "easyindex-index"})
 
     nsp_xci_variations = regex_config["nsp_variations"] + regex_config["xci_variations"]
@@ -117,3 +118,19 @@ def get_languages(soup, lang_dict):
                 lang_dict=lang_dict,
             )
             return langs
+
+
+def get_thumb_url(soup):
+    """Parse thumbnail URL from a soup
+
+    Args:
+        soup (bs4.BeautifulSoup): soup object to find languages in
+    """
+
+    # Get the main content, then find the first figure which we'll take as the thumbnail
+    content = soup.find("div", {"id": "content"})
+    thumb = content.findAll("figure")[0]
+    img = thumb.find("img")
+    url = img["src"]
+
+    return url

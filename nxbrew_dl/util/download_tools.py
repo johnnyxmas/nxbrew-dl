@@ -18,10 +18,10 @@ ANCHOR_URL = (
 
 
 def get_dl_dict(
-        soup,
-        dl_sites,
-        dl_names,
-        regions=None,
+    soup,
+    dl_sites,
+    dl_names,
+    regions=None,
 ):
     """For a particular page, parse out download links
 
@@ -105,8 +105,7 @@ def get_dl_dict(
                         )
                     elif dl_name == "Update":
                         tag, parsed_dict = parse_inline(
-                            tag, key="update",
-                            dl_sites=dl_sites
+                            tag, key="update", dl_sites=dl_sites
                         )
                     else:
                         raise ValueError(
@@ -152,9 +151,9 @@ def parse_regions(tag, regions):
 
 
 def parse_base_game(
-        tag,
-        dl_sites,
-        dl_names,
+    tag,
+    dl_sites,
+    dl_names,
 ):
     """Parse out links for base game
 
@@ -225,9 +224,9 @@ def parse_base_game(
 
 
 def parse_inline(
-        tag,
-        key,
-        dl_sites,
+    tag,
+    key,
+    dl_sites,
 ):
     """Parse in-line links
 
@@ -280,9 +279,7 @@ def RecaptchaV3():
     return answer
 
 
-def bypass_ouo(url,
-               logger=None,
-               impersonate="safari"):
+def bypass_ouo(url, logger=None, impersonate="safari"):
     """Bypass OUO url
 
     Args:
@@ -346,7 +343,9 @@ def bypass_ouo(url,
         while status_code not in [200, 302]:
 
             if logger is not None:
-                logger.warning(f"Received status code {status_code}. Waiting then retrying")
+                logger.warning(
+                    f"Received status code {status_code}. Waiting then retrying"
+                )
 
             time.sleep(10)
             res = client.post(
