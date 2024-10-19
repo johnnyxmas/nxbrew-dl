@@ -2,7 +2,11 @@
 Installation
 ############
 
-NXBrew-dl currently can only be installed via GitHub: ::
+We recommend that users use the latest executable from the
+`releases page <https://github.com/bbtufty/nxbrew-dl/releases>`_. Drop this into a folder of your choice, and
+double-click to get things running.
+
+NXBrew-dl can also be installed via GitHub: ::
 
   git clone https://github.com/bbtufty/nxbrew-dl.git
   pip install -e .

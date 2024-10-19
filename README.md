@@ -10,6 +10,8 @@ a GUI interface, allowing users to download items in bulk and keeping things up-
 As of now, this is in extremely early development. It will parse and download many ROMs, but be aware that currently
 if multiple regions exist, it will only download the US release. This will be upgrade in a future release.
 
+Grab the latest release from the [releases page](https://github.com/bbtufty/nxbrew-dl/releases). 
+
 To get started, see the [documentation](https://nxbrew-dl.readthedocs.io/en/latest/).
 
 We encourage users to open [issues](https://github.com/bbtufty/nxbrew-dl/issues>) as and where they find them.
