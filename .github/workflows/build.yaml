@@ -33,10 +33,3 @@ jobs:
           pip install build
       - name: Build package
         run: python -m build
-#      - name: Run pytest
-#        run: |
-#          pip install -e .
-#          pip install pytest
-#          cd tests
-#          pytest tests_romparser.py
-#          pytest tests_romchooser.py

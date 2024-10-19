@@ -42,6 +42,7 @@ jobs:
           pyinstaller nxbrew_dl_gui.py 
           --copy-metadata nxbrew_dl 
           --collect-data nxbrew_dl
+          --icon=nxbrew_dl/gui/img/logo.ico
           --onefile 
           -n nxbrew_dl.exe
       - uses: softprops/action-gh-release@v2
