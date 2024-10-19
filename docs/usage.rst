@@ -19,8 +19,12 @@ downloading!
    Because we prefer 1Fichier links over anything else, we strongly suggest investing in a premium
    account if you'll be downloading a lot of files. An hour is a long time to wait!
 
-Finally, we have ROM options. These are whether you prefer NSP or XCI files, and whether you would like to download
+We then have ROM options. These are whether you prefer NSP or XCI files, and whether you would like to download
 associated updates and DLC, if available.
+
+Finally, we have the Discord integration. If a URL is set here, then NXBrew-dl will post a summary of downloaded files
+via the Discord webhook. For details on how to set this up, see
+`here <https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks>`_.
 
 The right shows the NXBrew index. Each is flagged with various properties, such as whether it has an NSP or XCI file,
 updates, and DLC. By clicking the "DL?" button, you add to the list. You can filter using the search bar at the top.

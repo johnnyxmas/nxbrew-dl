@@ -1,9 +1,11 @@
+from .discord_tools import discord_push
 from .download_tools import get_dl_dict, bypass_ouo
-from .html_tools import get_html_page, get_game_dict, get_languages
+from .html_tools import get_html_page, get_game_dict, get_languages, get_thumb_url
 from .io_tools import load_yml, save_yml, load_json, save_json
 from .regex_tools import check_has_filetype, get_game_name
 
 __all__ = [
+    "discord_push",
     "get_dl_dict",
     "bypass_ouo",
     "get_html_page",
@@ -11,6 +13,7 @@ __all__ = [
     "check_has_filetype",
     "get_game_name",
     "get_languages",
+    "get_thumb_url",
     "load_yml",
     "save_yml",
     "load_json",

@@ -61,10 +61,7 @@ def load_json(file):
     return j
 
 
-def save_json(data,
-              out_file,
-              sort_key=None
-              ):
+def save_json(data, out_file, sort_key=None):
     """Save json in a pretty way
 
     Args:

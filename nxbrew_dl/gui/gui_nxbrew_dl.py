@@ -49,8 +49,6 @@ class MainWindow(QMainWindow):
         """NXBrew-dl Main Window
 
         TODO:
-            - Executable
-            - Discord webhook
             - Region/language priorities
         """
 
@@ -216,6 +214,7 @@ class MainWindow(QMainWindow):
             "jd_device": self.ui.lineEditJDownloaderDevice,
             "jd_user": self.ui.lineEditJDownloaderUser,
             "jd_pass": self.ui.lineEditJDownloaderPass,
+            "discord_url": self.ui.lineEditDiscordURL,
         }
 
         for field in text_fields:
@@ -256,6 +255,7 @@ class MainWindow(QMainWindow):
             "jd_device": self.ui.lineEditJDownloaderDevice.text(),
             "jd_user": self.ui.lineEditJDownloaderUser.text(),
             "jd_pass": self.ui.lineEditJDownloaderPass.text(),
+            "discord_url": self.ui.lineEditDiscordURL.text(),
         }
 
         for field in text_fields:

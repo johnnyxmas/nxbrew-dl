@@ -8,11 +8,13 @@ import myjdapi
 import nxbrew_dl
 from ..gui.gui_utils import get_gui_logger
 from ..util import (
+    discord_push,
     load_yml,
     load_json,
     save_json,
     get_html_page,
     get_languages,
+    get_thumb_url,
     get_dl_dict,
     bypass_ouo,
 )
@@ -23,6 +25,14 @@ DL_MAPPING = {
     "dlc": "DLC",
     "update": "Updates",
 }
+
+DISCORD_MAPPING = {
+    "base_game_nsp": "Base Game",
+    "base_game_xci": "Base Game",
+    "dlc": "DLC",
+    "update": "Update",
+}
+
 
 class NXBrew:
 
@@ -78,6 +88,12 @@ class NXBrew:
         self.logger.info(f"Connecting to device {jd_device_name}")
         self.jd_device = jd.get_device(jd_device_name)
 
+        # Discord stuff
+        discord_url = self.user_config.get("discord_url", "")
+        if discord_url == "":
+            discord_url = None
+        self.discord_url = discord_url
+
         self.to_download = to_download
 
     def run(self):
@@ -99,7 +115,7 @@ class NXBrew:
 
         self.logger.info("Cleaning up")
 
-        self.clean_downloads()
+        self.clean_up_cache()
 
         self.logger.info("All done!")
 
@@ -134,6 +150,15 @@ class NXBrew:
             cache_filename="game.html",
         )
 
+        # Get thumbnail, and add to cache if not there
+        thumb_url = get_thumb_url(
+            soup,
+        )
+        if "thumb_url" not in self.user_cache[url]:
+            self.logger.debug("Adding thumbnail URL to cache")
+            self.user_cache[url]["thumb_url"] = thumb_url
+
+        # Get languages
         langs = get_languages(
             soup,
             lang_dict=self.general_config["languages"],
@@ -261,10 +286,21 @@ class NXBrew:
 
                     # Update and save out cache
                     self.user_cache[url][dl_key].append(dl_info["full_name"])
-                    save_json(self.user_cache,
-                              self.user_cache_file,
-                              sort_key="name",
-                              )
+                    save_json(
+                        self.user_cache,
+                        self.user_cache_file,
+                        sort_key="name",
+                    )
+
+                    # Post to discord
+                    if self.discord_url is not None:
+                        self.post_to_discord(
+                            name=name,
+                            url=url,
+                            added_type=DISCORD_MAPPING[dl_key],
+                            description=dl_info["full_name"],
+                            thumb_url=thumb_url,
+                        )
 
     def run_jdownloader(
         self,
@@ -432,8 +468,40 @@ class NXBrew:
 
         return True
 
-    def clean_downloads(self):
-        """Remove items from the cache and on disk, if needed"""
+    def post_to_discord(
+        self, name, url, added_type="Base Game", description=None, thumb_url=None
+    ):
+        """Post summary as a discord message
+
+        Args:
+            name (str): Game name
+            url (str): URL for the ROM
+            added_type (str): Type of added link. Defaults to "Base Game"
+            description (str): Description of the link. Defaults to None
+            thumb_url (str): Thumbnail URL. Defaults to None
+        """
+
+        embeds = [
+            {
+                "author": {
+                    "name": name,
+                    "url": url,
+                },
+                "title": added_type,
+                "description": description,
+                "thumbnail": {"url": thumb_url},
+            }
+        ]
+
+        discord_push(
+            url=self.discord_url,
+            embeds=embeds,
+        )
+
+        return True
+
+    def clean_up_cache(self):
+        """Remove items from the cache and on disk, if needed, and do a final save"""
 
         # First, scan through for any games that are no longer check
         games = [g for g in self.to_download]
@@ -450,7 +518,9 @@ class NXBrew:
             for i, g in enumerate(games_to_delete):
 
                 for dl_dir in DL_MAPPING:
-                    g_dir = os.path.join(self.user_config["download_dir"], DL_MAPPING[dl_dir], g)
+                    g_dir = os.path.join(
+                        self.user_config["download_dir"], DL_MAPPING[dl_dir], g
+                    )
                     if os.path.exists(g_dir):
                         shutil.rmtree(g_dir)
 
@@ -461,7 +531,9 @@ class NXBrew:
         for key in ["dlc", "update"]:
             if not self.user_config[f"download_{key}"]:
                 self.logger.info(f"Removing {key} from cache and disk")
-                out_dir = os.path.join(self.user_config["download_dir"], DL_MAPPING[key])
+                out_dir = os.path.join(
+                    self.user_config["download_dir"], DL_MAPPING[key]
+                )
                 if os.path.exists(out_dir):
                     shutil.rmtree(out_dir)
 
@@ -469,9 +541,10 @@ class NXBrew:
                     self.user_cache[d].pop(key, [])
 
         # Save out the cache
-        save_json(self.user_cache,
-                  self.user_cache_file,
-                  sort_key="name",
-                  )
+        save_json(
+            self.user_cache,
+            self.user_cache_file,
+            sort_key="name",
+        )
 
         return True
