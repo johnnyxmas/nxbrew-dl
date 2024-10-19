@@ -2,6 +2,7 @@ import copy
 import os
 import time
 import shutil
+from pathvalidate import sanitize_filename
 
 import myjdapi
 
@@ -278,10 +279,13 @@ class NXBrew:
                     self.logger.info(f"Downloading {dl_key}: {dl_info['full_name']}")
                     out_dir = os.path.join(self.user_config["download_dir"], dl_dir)
 
+                    # Sanitize the package name so we're safe here
+                    package_name = sanitize_filename(name)
+
                     self.run_jdownloader(
                         dl_dict=dl_info,
                         out_dir=out_dir,
-                        package_name=name,
+                        package_name=package_name,
                     )
 
                     # Update and save out cache
