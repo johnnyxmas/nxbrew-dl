@@ -1,3 +1,8 @@
+0.3 (Unreleased)
+================
+
+- Update docs to reflect region preferences [#10]
+
 0.2 (2024-10-20)
 ================
 
