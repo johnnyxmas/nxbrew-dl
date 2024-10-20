@@ -27,7 +27,7 @@ class Ui_nxbrew_dl(object):
     def setupUi(self, nxbrew_dl):
         if not nxbrew_dl.objectName():
             nxbrew_dl.setObjectName(u"nxbrew_dl")
-        nxbrew_dl.resize(1187, 721)
+        nxbrew_dl.resize(1187, 907)
         self.actionDocumentation = QAction(nxbrew_dl)
         self.actionDocumentation.setObjectName(u"actionDocumentation")
         self.actionIssues = QAction(nxbrew_dl)
@@ -42,9 +42,9 @@ class Ui_nxbrew_dl(object):
         self.horizontalLayoutConfigGames.setObjectName(u"horizontalLayoutConfigGames")
         self.verticalLayoutConfig = QVBoxLayout()
         self.verticalLayoutConfig.setObjectName(u"verticalLayoutConfig")
-        self.verticalSpacerConfigTop = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_7 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayoutConfig.addItem(self.verticalSpacerConfigTop)
+        self.verticalLayoutConfig.addItem(self.verticalSpacer_7)
 
         self.labelNXBrewURL = QLabel(self.centralwidget)
         self.labelNXBrewURL.setObjectName(u"labelNXBrewURL")
@@ -61,7 +61,7 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addWidget(self.lineEditNXBrewURL)
 
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayoutConfig.addItem(self.verticalSpacer)
 
@@ -91,7 +91,7 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addLayout(self.horizontalLayout)
 
-        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_3 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayoutConfig.addItem(self.verticalSpacer_3)
 
@@ -132,7 +132,7 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addWidget(self.lineEditJDownloaderPass)
 
-        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_4 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayoutConfig.addItem(self.verticalSpacer_4)
 
@@ -156,7 +156,7 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addWidget(self.radioButtonPreferXCI)
 
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_2 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayoutConfig.addItem(self.verticalSpacer_2)
 
@@ -177,9 +177,44 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addWidget(self.checkBoxDownloadDLC)
 
-        self.verticalSpacerConfigBottom = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_6 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayoutConfig.addItem(self.verticalSpacerConfigBottom)
+        self.verticalLayoutConfig.addItem(self.verticalSpacer_6)
+
+        self.labelGameAdvancedOptions = QLabel(self.centralwidget)
+        self.labelGameAdvancedOptions.setObjectName(u"labelGameAdvancedOptions")
+
+        self.verticalLayoutConfig.addWidget(self.labelGameAdvancedOptions)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_2.addItem(self.horizontalSpacer_3)
+
+        self.pushButtonRegionLanguage = QPushButton(self.centralwidget)
+        self.pushButtonRegionLanguage.setObjectName(u"pushButtonRegionLanguage")
+        sizePolicy1.setHeightForWidth(self.pushButtonRegionLanguage.sizePolicy().hasHeightForWidth())
+        self.pushButtonRegionLanguage.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_2.addWidget(self.pushButtonRegionLanguage)
+
+        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_2.addItem(self.horizontalSpacer_4)
+
+
+        self.verticalLayoutConfig.addLayout(self.horizontalLayout_2)
+
+        self.checkBoxDryRun = QCheckBox(self.centralwidget)
+        self.checkBoxDryRun.setObjectName(u"checkBoxDryRun")
+        self.checkBoxDryRun.setChecked(False)
+
+        self.verticalLayoutConfig.addWidget(self.checkBoxDryRun)
+
+        self.verticalSpacer_8 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayoutConfig.addItem(self.verticalSpacer_8)
 
         self.labelDiscordURL = QLabel(self.centralwidget)
         self.labelDiscordURL.setObjectName(u"labelDiscordURL")
@@ -194,7 +229,7 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayoutConfig.addWidget(self.lineEditDiscordURL)
 
-        self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer_5 = QSpacerItem(330, 13, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayoutConfig.addItem(self.verticalSpacer_5)
 
@@ -382,6 +417,15 @@ class Ui_nxbrew_dl(object):
         self.checkBoxDownloadDLC.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"If available, will download DLCs", None))
 #endif // QT_CONFIG(statustip)
         self.checkBoxDownloadDLC.setText(QCoreApplication.translate("nxbrew_dl", u"Download DLCs", None))
+        self.labelGameAdvancedOptions.setText(QCoreApplication.translate("nxbrew_dl", u"Advanced options:", None))
+#if QT_CONFIG(statustip)
+        self.pushButtonRegionLanguage.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"Open region/language preferences", None))
+#endif // QT_CONFIG(statustip)
+        self.pushButtonRegionLanguage.setText(QCoreApplication.translate("nxbrew_dl", u"Region/Language Preferences", None))
+#if QT_CONFIG(statustip)
+        self.checkBoxDryRun.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"If checked, will not download anything", None))
+#endif // QT_CONFIG(statustip)
+        self.checkBoxDryRun.setText(QCoreApplication.translate("nxbrew_dl", u"Dry Run", None))
         self.labelDiscordURL.setText(QCoreApplication.translate("nxbrew_dl", u"Discord Webhook URL:", None))
 #if QT_CONFIG(statustip)
         self.lineEditDiscordURL.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"Webhook URL for Discord", None))

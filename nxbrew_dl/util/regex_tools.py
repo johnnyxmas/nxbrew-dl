@@ -62,13 +62,19 @@ def check_has_filetype(
         return False
 
 
-def parse_languages(f, lang_dict):
+def parse_languages(
+    f,
+    lang_dict=None,
+):
     """Parse languages out of a string
 
     Args:
         f (str): String pattern to match
         lang_dict (dict): Dictionary of languages
     """
+
+    if lang_dict is None:
+        return []
 
     long_langs = list(lang_dict.keys())
     short_langs = [lang_dict[l] for l in long_langs]
@@ -87,6 +93,9 @@ def parse_languages(f, lang_dict):
             short_match = re.match(short_lang, fs, flags=re.NOFLAG)
             if short_match:
                 langs.append(long_langs[i])
+
+                # If we do have a short match, move on
+                continue
 
             # Do a first pass where we check against short languages
             long_match = re.match(long_langs[i], fs, flags=re.NOFLAG)

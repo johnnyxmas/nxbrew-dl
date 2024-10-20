@@ -22,7 +22,14 @@ downloading!
 We then have ROM options. These are whether you prefer NSP or XCI files, and whether you would like to download
 associated updates and DLC, if available.
 
-Finally, we have the Discord integration. If a URL is set here, then NXBrew-dl will post a summary of downloaded files
+We expose region and language preferences through an advanced option. By default, we have the USA release as top
+priority, followed by Europe. For languages, we only allow languages that are marked as English. This should be
+reasonable for the average user but can be configured. To do that, see :doc:`advanced usage <advanced_usage>`.
+
+There is also a dry run option. If checked, will parse webpages but not download anything, or update the cache file.
+Mainly useful for testing.
+
+Finally, we have Discord integration. If a URL is set here, then NXBrew-dl will post a summary of downloaded files
 via the Discord webhook. For details on how to set this up, see
 `here <https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks>`_.
 

@@ -12,6 +12,7 @@
 
    installation
    usage
+   advanced_usage
    changelog
    reference_api
 

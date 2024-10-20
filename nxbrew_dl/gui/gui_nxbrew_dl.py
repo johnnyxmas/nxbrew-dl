@@ -11,14 +11,19 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication,
     QMainWindow,
     QFileDialog,
 )
 
 import nxbrew_dl
 from .gui_about import AboutWindow
-from .gui_utils import open_url, get_gui_logger, add_row_to_table
+from .gui_regions_languages import RegionLanguageWindow
+from .gui_utils import (
+    open_url,
+    get_gui_logger,
+    add_row_to_table,
+    get_ordered_list,
+)
 from .layout_nxbrew_dl import Ui_nxbrew_dl
 from ..nxbrew_dl import NXBrew
 from ..util import (
@@ -48,12 +53,12 @@ class MainWindow(QMainWindow):
     def __init__(self):
         """NXBrew-dl Main Window
 
-        TODO:
-            - Region/language priorities
+        This is the main GUI for NXBrew-dl. It's where the magic happens!
         """
 
         super().__init__()
 
+        # Load in main GUI
         self.ui = Ui_nxbrew_dl()
         self.ui.setupUi(self)
 
@@ -65,10 +70,12 @@ class MainWindow(QMainWindow):
 
         # Load in various config files
         self.mod_dir = os.path.dirname(nxbrew_dl.__file__)
-        self.general_config = load_yml(
-            os.path.join(self.mod_dir, "configs", "general.yml")
-        )
-        self.regex_config = load_yml(os.path.join(self.mod_dir, "configs", "regex.yml"))
+
+        general_config_filename = os.path.join(self.mod_dir, "configs", "general.yml")
+        self.general_config = load_yml(general_config_filename)
+
+        regex_config_filename = os.path.join(self.mod_dir, "configs", "regex.yml")
+        self.regex_config = load_yml(regex_config_filename)
 
         # Read in the user config, keeping the filename around so we can save it out later
         self.user_config_file = os.path.join(os.getcwd(), "config.yml")
@@ -76,7 +83,14 @@ class MainWindow(QMainWindow):
             self.user_config = load_yml(self.user_config_file)
         else:
             self.user_config = {}
-        self.load_config()
+
+        # Load in regions/languages popup
+        self.regions_languages = RegionLanguageWindow(
+            general_config=self.general_config,
+            user_config=self.user_config,
+        )
+        reg_lang_button = self.ui.pushButtonRegionLanguage
+        reg_lang_button.clicked.connect(lambda: self.regions_languages.show())
 
         # Read in user cache, keeping the filename around so we can save it out later
         self.user_cache_file = os.path.join(os.getcwd(), "cache.json")
@@ -84,6 +98,9 @@ class MainWindow(QMainWindow):
             self.user_cache = load_json(self.user_cache_file)
         else:
             self.user_cache = {}
+
+        # Do an initial load of the config
+        self.load_config()
 
         self.logger = get_gui_logger(log_level="INFO")
         self.logger.warning("Do not close this window!")
@@ -111,9 +128,9 @@ class MainWindow(QMainWindow):
         run_nxbrew_dl.clicked.connect(self.run_nxbrew_dl)
 
         exit_button = self.ui.pushButtonExit
-        exit_button.clicked.connect(self.close_all)
+        exit_button.clicked.connect(self.close)
 
-        # Directory browing for the download directory
+        # Directory browsing for the download directory
         self.ui.pushButtonDownloadDir.clicked.connect(
             partial(self.set_directory_name, line_edit=self.ui.lineEditDownloadDir)
         )
@@ -217,10 +234,18 @@ class MainWindow(QMainWindow):
             "discord_url": self.ui.lineEditDiscordURL,
         }
 
+        bool_switches = {
+            "download_update": self.ui.checkBoxDownloadUpdates,
+            "download_dlc": self.ui.checkBoxDownloadDLC,
+            "dry_run": self.ui.checkBoxDryRun,
+        }
+
+        # Set text fields
         for field in text_fields:
             if field in self.user_config:
                 text_fields[field].setText(self.user_config[field])
 
+        # Set preferred filetypes
         if "prefer_filetype" in self.user_config:
 
             prefer_filetype = self.user_config["prefer_filetype"]
@@ -236,13 +261,14 @@ class MainWindow(QMainWindow):
 
             button.setChecked(True)
 
-        if "download_update" in self.user_config:
-            dl_updates = self.user_config["download_update"]
-            self.ui.checkBoxDownloadUpdates.setChecked(dl_updates)
+        # Set the boolean switches
+        for bool_switch in bool_switches:
+            if bool_switch in self.user_config:
+                bool_val = self.user_config[bool_switch]
+                bool_switches[bool_switch].setChecked(bool_val)
 
-        if "download_dlc" in self.user_config:
-            dl_dlc = self.user_config["download_dlc"]
-            self.ui.checkBoxDownloadDLC.setChecked(dl_dlc)
+        # And finally, load the region/language list
+        self.regions_languages.load_config()
 
     def save_config(
         self,
@@ -258,9 +284,16 @@ class MainWindow(QMainWindow):
             "discord_url": self.ui.lineEditDiscordURL.text(),
         }
 
+        bool_switches = {
+            "download_update": self.ui.checkBoxDownloadUpdates,
+            "download_dlc": self.ui.checkBoxDownloadDLC,
+            "dry_run": self.ui.checkBoxDryRun,
+        }
+
         for field in text_fields:
             self.user_config[field] = text_fields[field]
 
+        # Set the NSP/XCI preferences
         prefer_filetype = self.ui.buttonGroupPreferNSPXCI.checkedButton().text()
         if prefer_filetype == "Prefer NSPs":
             self.user_config["prefer_filetype"] = "NSP"
@@ -269,10 +302,22 @@ class MainWindow(QMainWindow):
         else:
             raise ValueError(f"Button {prefer_filetype} not understood")
 
-        self.user_config["download_update"] = (
-            self.ui.checkBoxDownloadUpdates.isChecked()
+        # Set the boolean switches
+        for bool_switch in bool_switches:
+            self.user_config[bool_switch] = bool_switches[bool_switch].isChecked()
+
+        # Set region/language priorities (only if there are some!)
+        regions = get_ordered_list(
+            self.regions_languages.ui.listWidgetConfigRegionsLanguagesRegions
         )
-        self.user_config["download_dlc"] = self.ui.checkBoxDownloadDLC.isChecked()
+        if len(regions) > 0:
+            self.user_config["regions"] = regions
+
+        languages = get_ordered_list(
+            self.regions_languages.ui.listWidgetConfigRegionsLanguagesLanguages
+        )
+        if len(languages) > 0:
+            self.user_config["languages"] = languages
 
         save_yml(self.user_config_file, self.user_config)
 
@@ -303,6 +348,9 @@ class MainWindow(QMainWindow):
         # Start out by saving the config
         self.save_config()
 
+        # Close any other windows
+        self.regions_languages.close()
+
         # Get a list of things to download
         to_download = {}
 
@@ -321,6 +369,8 @@ class MainWindow(QMainWindow):
         self.nxbrew_thread = QThread()
         self.nxbrew_worker = NXBrewWorker(
             to_download=to_download,
+            user_config=self.user_config,
+            user_cache=self.user_cache,
             logger=self.logger,
         )
 
@@ -344,14 +394,13 @@ class MainWindow(QMainWindow):
 
         return True
 
-    @Slot()
-    def close_all(self):
+    def closeEvent(self, event):
         """Close the application"""
 
         self.logger.info("Closing down. Will save config")
         self.save_config()
 
-        QApplication.closeAllWindows()
+        event.accept()
 
 
 class NXBrewWorker(QObject):
@@ -362,17 +411,45 @@ class NXBrewWorker(QObject):
     def __init__(
         self,
         to_download,
+        general_config=None,
+        regex_config=None,
+        user_config=None,
+        user_cache=None,
         logger=None,
     ):
+        """Initialise the NXBrew downloader
+
+        Args:
+            to_download (dict): Dictionary of ROMs to download
+            general_config (dict): Dictionary of general configuration.
+                Defaults to None, which will load in from expected path
+            regex_config (dict): Dictionary of regex configuration.
+                Defaults to None, which will load in from expected path
+            user_config (dict): Dictionary of user configuration.
+                Defaults to None, which will load in from expected path
+            user_cache (dict): Dictionary of user cache configuration.
+                Defaults to None, which will load in from expected path
+            logger (logging.Logger): Logger instance. Defaults to None,
+                which will set up its own logger
+        """
         super().__init__()
 
         self.to_download = to_download
+        self.general_config = general_config
+        self.regex_config = regex_config
+        self.user_config = user_config
+        self.user_cache = user_cache
         self.logger = logger
 
     def run(self):
+        """Run NXBrew-dl"""
 
         nx = NXBrew(
             to_download=self.to_download,
+            general_config=self.general_config,
+            regex_config=self.regex_config,
+            user_config=self.user_config,
+            user_cache=self.user_cache,
             logger=self.logger,
         )
         nx.run()
