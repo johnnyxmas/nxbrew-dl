@@ -10,6 +10,10 @@ GUI
     :members:
     :undoc-members:
 
+.. autoclass:: nxbrew_dl.gui.RegionLanguageWindow
+    :members:
+    :undoc-members:
+
 .. autoclass:: nxbrew_dl.gui.AboutWindow
     :members:
     :undoc-members:

@@ -1,10 +1,11 @@
 import copy
 import os
-import time
 import shutil
-from pathvalidate import sanitize_filename
+import time
 
 import myjdapi
+import numpy as np
+from pathvalidate import sanitize_filename
 
 import nxbrew_dl
 from ..gui.gui_utils import get_gui_logger
@@ -27,12 +28,42 @@ DL_MAPPING = {
     "update": "Updates",
 }
 
-DISCORD_MAPPING = {
-    "base_game_nsp": "Base Game",
-    "base_game_xci": "Base Game",
+DL_NAME_MAPPING = {
+    "base_game_nsp": "Base Game (NSP)",
+    "base_game_xci": "Base Game (XCI)",
     "dlc": "DLC",
     "update": "Update",
 }
+
+
+def add_ordered_score(
+    releases,
+    dl_dict,
+    priorities,
+    score_key,
+):
+    """Add an ordered score, include the priority of the order
+
+    Args:
+        releases (list): List of releases to score
+        dl_dict (dict): Dictionary of potential downloads
+        priorities (list): List of values in priority order
+        score_key (str): Corresponding score key for the priorities in the rom_dict
+    """
+
+    score_dict = {}
+
+    # Go backwards so the first entry is the highest priority
+    for i, prio in enumerate(priorities[::-1]):
+        score_dict[prio] = i + 1
+
+    scores = np.zeros_like(releases, dtype=int)
+    for i, r in enumerate(releases):
+        for key in dl_dict[r][score_key]:
+            if key in score_dict:
+                scores[i] += score_dict[key]
+
+    return scores
 
 
 class NXBrew:
@@ -40,6 +71,10 @@ class NXBrew:
     def __init__(
         self,
         to_download,
+        general_config=None,
+        regex_config=None,
+        user_config=None,
+        user_cache=None,
         logger=None,
     ):
         """Handles downloading files
@@ -50,29 +85,51 @@ class NXBrew:
 
         Args:
             to_download (dict): Dictionary of files to download
+            general_config (dict): Dictionary for default configuration
+            regex_config (dict): Dictionary for regex configuration
+            user_config (dict): Dictionary for user configuration
+            user_cache (dict): Cache dictionary
             logger (logging.logger): Logger instance. If None, will set up a new one
         """
 
-        # Load in various config files
+        # Load in various config files, if they're not already loaded
         self.mod_dir = os.path.dirname(nxbrew_dl.__file__)
-        self.general_config = load_yml(
-            os.path.join(self.mod_dir, "configs", "general.yml")
-        )
-        self.regex_config = load_yml(os.path.join(self.mod_dir, "configs", "regex.yml"))
 
-        # Read in the user config, keeping the filename around so we can save it out later
-        self.user_config_file = os.path.join(os.getcwd(), "config.yml")
-        if os.path.exists(self.user_config_file):
-            self.user_config = load_yml(self.user_config_file)
-        else:
-            self.user_config = {}
+        general_config_filename = os.path.join(self.mod_dir, "configs", "general.yml")
+        if general_config is None:
+            general_config = load_yml(general_config_filename)
+        self.general_config = general_config
+
+        regex_config_filename = os.path.join(self.mod_dir, "configs", "regex.yml")
+        if regex_config is None:
+            regex_config = load_yml(regex_config_filename)
+        self.regex_config = regex_config
+
+        # Read in the user config
+        user_config_file = os.path.join(os.getcwd(), "config.yml")
+        if user_config is None:
+            if os.path.exists(user_config_file):
+                user_config = load_yml(user_config_file)
+            else:
+                user_config = {}
+        self.user_config = user_config
+
+        self.region_prefs = self.user_config["regions"]
+        self.language_prefs = self.user_config["languages"]
+
+        # Add an "All" at the start of prefs as a catch-all
+        self.region_prefs.insert(0, "All")
+        self.language_prefs.insert(0, "All")
 
         # Read in user cache, keeping the filename around so we can save it out later
-        self.user_cache_file = os.path.join(os.getcwd(), "cache.json")
-        if os.path.exists(self.user_cache_file):
-            self.user_cache = load_json(self.user_cache_file)
-        else:
-            self.user_cache = {}
+        user_cache_file = os.path.join(os.getcwd(), "cache.json")
+        if user_cache is None:
+            if os.path.exists(user_cache_file):
+                user_cache = load_json(user_cache_file)
+            else:
+                user_cache = {}
+        self.user_cache = user_cache
+        self.user_cache_file = user_cache_file
 
         if logger is None:
             logger = get_gui_logger(log_level="INFO")
@@ -97,28 +154,39 @@ class NXBrew:
 
         self.to_download = to_download
 
+        self.dry_run = self.user_config.get("dry_run", False)
+
     def run(self):
         """Run NXBrew-dl"""
+
+        self.logger.info("")
+        self.logger.info(f"=" * 80)
+        self.logger.info(f"{' '*30}STARTING NXBREW-DL{' '*30}")
+        self.logger.info(f"=" * 80)
 
         for name in self.to_download:
 
             url = self.to_download[name]
 
+            self.logger.info("")
             self.logger.info(f"=" * 80)
             self.logger.info(f"Starting download for: {name}")
+            self.logger.info("")
             self.download_game(
                 name=name,
                 url=url,
             )
             self.logger.info(f"=" * 80)
+            self.logger.info("")
 
-        self.logger.info("All downloads completed")
-
-        self.logger.info("Cleaning up")
+        # Clean up
+        self.logger.info("Performing final cache/disk clean up")
+        self.logger.info("")
 
         self.clean_up_cache()
 
         self.logger.info("All done!")
+        self.logger.info("")
 
     def download_game(
         self,
@@ -137,125 +205,209 @@ class NXBrew:
             url (str): URL to download
         """
 
-        if url not in self.user_cache:
-            self.user_cache[url] = {}
-            self.user_cache[url]["name"] = name
-
-        # TODO: For now, we only allow English releases. Make this configurable later
-        allowed_regions = ["All", "USA"]
-        allowed_languages = ["English"]
-
         # Get the soup
         soup = get_html_page(
             url,
             cache_filename="game.html",
         )
 
-        # Get thumbnail, and add to cache if not there
+        # Get thumbnail URL
         thumb_url = get_thumb_url(
             soup,
         )
-        if "thumb_url" not in self.user_cache[url]:
-            self.logger.debug("Adding thumbnail URL to cache")
-            self.user_cache[url]["thumb_url"] = thumb_url
 
         # Get languages
         langs = get_languages(
             soup,
             lang_dict=self.general_config["languages"],
         )
+        langs.sort()
 
-        self.logger.info(f"Found languages: {', '.join(langs)}")
+        self.logger.info(f"Found languages across all releases:")
+        for l in langs:
+            self.logger.info(f"\t{l}")
+        self.logger.info("")
 
         # If the language we want isn't in here, then skip
         found_language = False
         for lang in langs:
-            for allowed_lang in allowed_languages:
-                if lang == allowed_lang:
+            for lang_pref in self.language_prefs:
+                if lang == lang_pref:
                     found_language = True
+                    break
+            if found_language:
+                break
 
         if not found_language:
-            self.logger.warning(
-                f"Did not find any requested language: {allowed_languages}"
-            )
+            self.logger.warning(f"Did not find any requested language:")
+            for l in self.language_prefs:
+                self.logger.warning(f"\t{l}")
+            self.logger.warning("")
             return False
 
         # Pull out useful things from the config
         regions = list(self.general_config["regions"].keys())
+        languages = self.general_config["languages"]
+        implied_languages = self.general_config["implied_languages"]
         dl_sites = self.general_config["dl_sites"]
         dl_names = self.general_config["dl_names"]
 
         dl_dict = get_dl_dict(
             soup,
             regions=regions,
+            languages=languages,
+            implied_languages=implied_languages,
             dl_sites=dl_sites,
             dl_names=dl_names,
         )
         n_releases = len(dl_dict)
 
-        self.logger.info(f"Found {n_releases} releases:")
+        self.logger.info(f"Found {n_releases} release(s):")
 
         for release in dl_dict:
-            self.logger.info(f"Region(s): {'/'.join(dl_dict[release]['regions'])}")
+            self.logger.info(f"\tRegion(s):")
+            for r in dl_dict[release]["regions"]:
+                self.logger.info(f"\t\t{r}")
 
-            if any([key == "base_game_nsp" for key in dl_dict[release]]):
-                self.logger.info("\tHas NSP")
-            if any([key == "base_game_xci" for key in dl_dict[release]]):
-                self.logger.info("\tHas XCI")
-            if any([key == "dlc" for key in dl_dict[release]]):
-                self.logger.info("\tHas DLC")
-            if any([key == "update" for key in dl_dict[release]]):
-                self.logger.info("\tHas Update")
+            self.logger.info(f"\tLanguages(s):")
+            for l in dl_dict[release]["languages"]:
+                self.logger.info(f"\t\t{l}")
+
+            # Loop over the various file types, and print out the links and associated
+            # sites
+            for dl_name in DL_NAME_MAPPING:
+                clean_dl_name = DL_NAME_MAPPING[dl_name]
+
+                if any([key == dl_name for key in dl_dict[release]]):
+                    self.logger.info(f"\t{clean_dl_name}:")
+                    for release_dl in dl_dict[release][dl_name]:
+                        self.logger.info(f"\t\t{release_dl['full_name']}:")
+
+                        for dl_site in dl_sites:
+                            if dl_site in release_dl:
+                                # print(release_dl[dl_site])
+                                self.logger.info(f"\t\t\t{dl_site}:")
+                                for dl_link in release_dl[dl_site]:
+                                    self.logger.info(f"\t\t\t- {dl_link}")
+
             self.logger.info("")
 
-        releases_to_remove = []
-        for release in dl_dict:
+        # Remove if it's not a region or language we want
 
-            found_region = False
+        pref_mapping = {
+            "regions": self.region_prefs,
+            "languages": self.language_prefs,
+        }
 
-            release_regions = dl_dict[release]["regions"]
-            for release_region in release_regions:
-                for allowed_region in allowed_regions:
-                    if release_region == allowed_region:
-                        found_region = True
+        for key in ["regions", "languages"]:
 
-            if not found_region:
-                releases_to_remove.append(release)
+            prefs = pref_mapping[key]
 
-        if len(releases_to_remove) > 0:
-            self.logger.info("Removing unwanted regions:")
-            for release in releases_to_remove:
-                self.logger.info(f"\t{'/'.join(dl_dict[release]['regions'])}")
-                dl_dict.pop(release)
+            releases_to_remove = []
+            for release in dl_dict:
+
+                found = False
+
+                release_vals = dl_dict[release][key]
+                for val in release_vals:
+                    for pref in prefs:
+                        if val == pref:
+                            found = True
+                            break
+                    if found:
+                        break
+
+                if not found:
+                    releases_to_remove.append(release)
+
+            if len(releases_to_remove) > 0:
+                self.logger.info(f"Removing unwanted release(s) based on {key}:")
+                for release in releases_to_remove:
+                    self.logger.info(f"\t{'/'.join(dl_dict[release]['regions'])}")
+                    dl_dict.pop(release)
+                self.logger.info("")
 
         if len(dl_dict) > 1:
-            raise NotImplementedError(
-                "Multiple suitable releases found. Unsure how to deal with this right now"
+            self.logger.info(
+                "Multiple suitable releases found. Will score to find most suitable"
             )
+            best_release = self.get_dl_dict_score(dl_dict=dl_dict)
 
-        # Trim down to just our one ROM
+            # Now remove anything that's not the best release
+            releases_to_remove = []
+            for r in dl_dict:
+                if r not in best_release:
+                    releases_to_remove.append(r)
+
+            if len(releases_to_remove) > 0:
+                self.logger.info("Removing lower scored release(s):")
+                for release in releases_to_remove:
+                    self.logger.info(f"\t{'/'.join(dl_dict[release]['regions'])}")
+                    dl_dict.pop(release)
+                self.logger.info("")
+
+            # If we're still too long, then bug out
+            if len(dl_dict) > 1:
+                raise NotImplementedError(
+                    "Multiple suitable releases found. Unsure how to deal with this right now"
+                )
+
+        # Trim down to just one ROM
         release = list(dl_dict.keys())[0]
         dl_dict = dl_dict[release]
 
         if "base_game_nsp" in dl_dict and "base_game_xci" in dl_dict:
-            self.logger.info("Found both NSP and XCI")
+            self.logger.info("Found both NSP and XCI:")
 
             if self.user_config["prefer_filetype"] == "NSP":
+                self.logger.info(f"\tRemoving XCI")
                 dl_dict.pop("base_game_xci")
             elif self.user_config["prefer_filetype"] == "XCI":
+                self.logger.info(f"\tRemoving NSP")
                 dl_dict.pop("base_game_nsp")
             else:
                 raise ValueError("Expecting preferred filetype to be one of NSP, XCI")
+            self.logger.info("")
 
         if not self.user_config["download_dlc"]:
-            self.logger.info("Removing any DLC")
-            dl_dict.pop("dlc", [])
+            self.logger.info("Removing DLC")
+            removed_dict = dl_dict.pop("dlc", [])
+
+            # If we've removed anything, say so here
+            if len(removed_dict) > 0:
+                for r in removed_dict:
+                    self.logger.info(f"\t- {r['full_name']}")
+
+            self.logger.info("")
 
         if not self.user_config["download_update"]:
-            self.logger.info("Removing any updates")
-            dl_dict.pop("update", [])
+            self.logger.info("Removing updates")
+            removed_dict = dl_dict.pop("update", [])
+
+            # If we've removed anything, say so here
+            if len(removed_dict) > 0:
+                for r in removed_dict:
+                    self.logger.info(f"\t- {r['full_name']}")
+
+            self.logger.info("")
+
+        if self.dry_run:
+            self.logger.info("Dry run, will not download anything")
+            return True
+
+        # Add unique URL to cache if it's not already there
+        if url not in self.user_cache:
+            self.logger.debug(f"Adding {name} to cache")
+            self.user_cache[url] = {}
+            self.user_cache[url]["name"] = name
+
+        # Add thumbnail URL to cache if it's not already there
+        if "thumb_url" not in self.user_cache[url]:
+            self.logger.debug("Adding thumbnail URL to cache")
+            self.user_cache[url]["thumb_url"] = thumb_url
 
         # Hooray! We're finally ready to start downloading. Map things to folder and let's get going
+        self.logger.info("Beginning download process:")
 
         for dl_key in DL_MAPPING:
 
@@ -273,10 +425,10 @@ class NXBrew:
 
                 if dl_info["full_name"] in self.user_cache[url][dl_key]:
                     self.logger.info(
-                        f"{dl_info['full_name']} already downloaded. Will skip"
+                        f"\t{DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']} already downloaded. Will skip"
                     )
                 else:
-                    self.logger.info(f"Downloading {dl_key}: {dl_info['full_name']}")
+                    self.logger.info(f"\tDownloading {DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']}")
                     out_dir = os.path.join(self.user_config["download_dir"], dl_dir)
 
                     # Sanitize the package name so we're safe here
@@ -287,6 +439,7 @@ class NXBrew:
                         out_dir=out_dir,
                         package_name=package_name,
                     )
+                    self.logger.info("")
 
                     # Update and save out cache
                     self.user_cache[url][dl_key].append(dl_info["full_name"])
@@ -301,10 +454,57 @@ class NXBrew:
                         self.post_to_discord(
                             name=name,
                             url=url,
-                            added_type=DISCORD_MAPPING[dl_key],
+                            added_type=DL_NAME_MAPPING[dl_key],
                             description=dl_info["full_name"],
                             thumb_url=thumb_url,
                         )
+
+        self.logger.info("")
+        self.logger.info("All downloads complete")
+
+        return True
+
+    def get_dl_dict_score(
+        self,
+        dl_dict,
+    ):
+        """Get the best ROM(s) from a list, using a scoring system
+
+        We only score by language and region, preferring a particular
+        region over a particular language
+
+        Args:
+            dl_dict: Dictionary of potential downloads
+        """
+
+        language_score = 1e2
+        region_score = 1e4
+
+        releases = list(dl_dict.keys())
+        release_scores = np.zeros(len(releases))
+
+        # Language priorities
+        language_score_to_add = add_ordered_score(
+            releases=releases,
+            dl_dict=dl_dict,
+            priorities=self.language_prefs,
+            score_key="languages",
+        )
+        release_scores += language_score * (1 + (language_score_to_add - 1) / 100)
+
+        # Regions priorities
+        region_score_to_add = add_ordered_score(
+            releases=releases,
+            dl_dict=dl_dict,
+            priorities=self.region_prefs,
+            score_key="regions",
+        )
+        release_scores += region_score * (1 + (region_score_to_add - 1) / 100)
+
+        best_release_idx = np.where(release_scores == np.nanmax(release_scores))[0]
+        releases = np.asarray(releases)[best_release_idx]
+
+        return releases
 
     def run_jdownloader(
         self,
@@ -321,28 +521,31 @@ class NXBrew:
 
         Args:
             dl_dict (dict): Dictionary of download files
-            out_dir (str): Directory to save downloaded files
+            out_dir: Directory to save downloaded files
             package_name (str): Name of package to define subdirectories
                 and keep track of links
         """
 
         package_id = None
+        dl_site = None
 
         # Loop over download sites, hit the first one we find
         for dl_site in self.general_config["dl_sites"]:
             if dl_site in dl_dict:
                 dl_links = dl_dict[dl_site]
-                if len(dl_links) > 1:
-                    self.logger.info(f"Multi-part file found for {dl_site}")
+                self.logger.info(f"\t\tTrying {dl_site}:")
 
                 for d in dl_links:
+                    self.logger.info(f"\t\t\tLink: {d}")
                     if "ouo" in d:
-                        self.logger.info(f"Found shortened link {d}. Will bypass")
+                        self.logger.info(
+                            f"\t\t\t\t{d} detected as shortened link. Will bypass"
+                        )
                         d_final = bypass_ouo(d, logger=self.logger)
                     else:
                         d_final = copy.deepcopy(d)
 
-                    self.logger.info(f"Adding {d_final} to JDownloader")
+                    self.logger.info(f"\t\t\t\tAdding {d_final} to JDownloader")
                     self.jd_device.linkgrabber.add_links(
                         [
                             {
@@ -375,7 +578,7 @@ class NXBrew:
                     if f["packageUUID"] == package_id:
                         if not f["availability"] == "ONLINE":
                             self.logger.warning(
-                                "Link offline, will remove and try with another download client"
+                                "\t\t\tLink(s) offline, will remove and try with another download client"
                             )
                             any_offline = True
                             break
@@ -385,6 +588,9 @@ class NXBrew:
                     continue
 
                 break
+
+        if dl_site is None:
+            raise ValueError("Expecting dl_site to be defined")
 
         if package_id is None:
             raise ValueError("Expecting the package_id to be defined")
@@ -398,7 +604,8 @@ class NXBrew:
                 link_ids.append(l["uuid"])
 
         # Hooray! We've got stuff online. Start downloading
-        self.logger.info("Beginning downloads")
+        self.logger.info(f"\t\t\tSuccess! Will download from {dl_site}")
+        self.logger.info(f"\t\tStarting download")
         self.jd_device.linkgrabber.move_to_downloadlist(
             link_ids=link_ids, package_ids=[package_id]
         )
@@ -458,7 +665,7 @@ class NXBrew:
         # Wait for a bit, just to ensure everything is good
         time.sleep(5)
 
-        self.logger.info("Downloads complete")
+        self.logger.info("\t\tFiles successfully downloaded")
 
         # And finally, cleanup
         self.jd_device.downloads.cleanup(
@@ -468,7 +675,7 @@ class NXBrew:
             package_ids=[package_id],
         )
 
-        self.logger.info("Cleanup complete")
+        self.logger.info("\t\tLinks removed from JDownloader")
 
         return True
 
@@ -519,22 +726,34 @@ class NXBrew:
                 keys_to_delete.append(d)
 
         if len(games_to_delete) > 0:
+
+            self.logger.info(f"\tRemoving games:")
+
             for i, g in enumerate(games_to_delete):
+
+                g_sanitized = sanitize_filename(g)
 
                 for dl_dir in DL_MAPPING:
                     g_dir = os.path.join(
-                        self.user_config["download_dir"], DL_MAPPING[dl_dir], g
+                        self.user_config["download_dir"],
+                        DL_MAPPING[dl_dir],
+                        g_sanitized,
                     )
                     if os.path.exists(g_dir):
+                        self.logger.info(f"\t\tRemoving {g}")
                         shutil.rmtree(g_dir)
 
                 # And remove from the cache
                 self.user_cache.pop(keys_to_delete[i])
 
+            self.logger.info("")
+
         # Now, do a pass where we'll get rid of DLC/updates if they're no longer requested
         for key in ["dlc", "update"]:
             if not self.user_config[f"download_{key}"]:
-                self.logger.info(f"Removing {key} from cache and disk")
+                self.logger.info(
+                    f"\tRemoving {DL_NAME_MAPPING[key]} from cache and disk"
+                )
                 out_dir = os.path.join(
                     self.user_config["download_dir"], DL_MAPPING[key]
                 )

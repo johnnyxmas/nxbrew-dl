@@ -6,6 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cffi_requests
 
+from .regex_tools import parse_languages
+
 ANCHOR_URL = (
     "https://www.google.com/recaptcha/api2/anchor?"
     "ar=1&k=6Lcr1ncUAAAAAH3cghg6cOTPGARa8adOf-y9zv2x&"
@@ -22,6 +24,8 @@ def get_dl_dict(
     dl_sites,
     dl_names,
     regions=None,
+    languages=None,
+    implied_languages=None,
 ):
     """For a particular page, parse out download links
 
@@ -35,7 +39,15 @@ def get_dl_dict(
         dl_names (dict): Dictionary of names to map to download types
         regions (list): list of regions potentially parse. Defaults
             to None, which will use an empty list
+        languages (dict): list of languages potentially parse. Defaults
+            to None, which will use an empty dict
+        implied_languages (dict): Dictionary of mappings from regions
+            to implied languages. Defaults to None, which will use
+            an empty dict
     """
+
+    if implied_languages is None:
+        implied_languages = {}
 
     if regions is None:
         regions = []
@@ -71,11 +83,28 @@ def get_dl_dict(
         parsed_regions = parse_regions(tag, regions)
 
         if len(parsed_regions) > 0:
+
+            # Parse out languages
+            parsed_languages = parse_language_tag(tag, languages)
+
+            # If we haven't found anything, use implied languages
+            if len(parsed_languages) == 0:
+                for region in parsed_regions:
+                    if region in implied_languages:
+                        parsed_languages.append(implied_languages[region])
+
+            # If we still don't have anything, just assign all languages here
+            if len(parsed_languages) == 0:
+                parsed_languages = ["All"]
+
             tag = tag.find_next("p")
+
         else:
             parsed_regions = ["All"]
+            parsed_languages = ["All"]
 
         dl_dict[current_release]["regions"] = parsed_regions
+        dl_dict[current_release]["languages"] = parsed_languages
 
         # We are within a region now, so search for "Base Game/Update/DLC" here.
         # Keep looping until we don't find anything. Keep things in list form
@@ -113,10 +142,14 @@ def get_dl_dict(
                         )
 
                     # Get out the key, and append to the full dictionary
-                    parsed_key = list(parsed_dict.keys())[0]
-                    if parsed_key not in dl_dict[current_release]:
-                        dl_dict[current_release][parsed_key] = []
-                    dl_dict[current_release][parsed_key].append(parsed_dict[parsed_key])
+                    parsed_keys = list(parsed_dict.keys())
+
+                    for parsed_key in parsed_keys:
+                        if parsed_key not in dl_dict[current_release]:
+                            dl_dict[current_release][parsed_key] = []
+                        dl_dict[current_release][parsed_key].append(
+                            parsed_dict[parsed_key]
+                        )
 
                     found_anything_dl = True
 
@@ -124,8 +157,15 @@ def get_dl_dict(
             if not found_anything_dl:
                 still_hunting_dl = False
 
-        # If we only have regions in here, then we've not found anything so delete the release, and leave
-        if len(dl_dict[current_release]) == 1:
+        # If we don't have anything useful in here, delete the release and leave
+        dl_keys = [
+            "base_game_nsp",
+            "base_game_xci",
+            "dlc",
+            "update",
+        ]
+
+        if not any([n in dl_dict[current_release] for n in dl_keys]):
             del dl_dict[current_release]
             still_hunting = False
 
@@ -148,6 +188,32 @@ def parse_regions(tag, regions):
             parsed_regions.append(region)
 
     return parsed_regions
+
+
+def parse_language_tag(tag, languages=None):
+    """From a soup tag, find things in square brackets and parse as potential languages
+
+    Args:
+        tag (bs4.Tag): tag object to parse
+        languages (dict): Dictionary of languages potentially parse
+    """
+
+    # Figure out if we have anything here. It should be between square brackets
+    t = tag.text
+
+    reg = re.findall("\[(.*?)\]", t)
+
+    # Loop over everything, and if we match then return
+    parsed_languages = []
+    for r in reg:
+        parsed_languages = parse_languages(
+            r,
+            lang_dict=languages,
+        )
+        if len(parsed_languages) > 0:
+            break
+
+    return parsed_languages
 
 
 def parse_base_game(

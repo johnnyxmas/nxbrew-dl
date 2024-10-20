@@ -20,4 +20,6 @@ For details on installation, see :doc:`installation <installation>`.
 
 For how to use NXBrew-dl, see :doc:`usage <usage>`.
 
+For advanced topics, see :doc:`advanced usage <advanced_usage>`.
+
 We encourage users to open `issues <https://github.com/bbtufty/nxbrew-dl/issues>`_ as and where they find them.

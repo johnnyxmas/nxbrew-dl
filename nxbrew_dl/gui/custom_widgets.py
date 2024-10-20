@@ -20,7 +20,7 @@ def set_dl(
         row_position (int): Row position
     """
 
-    dl = QTableWidgetItem()
+    dl = SortableCheckboxTableWidgetItem()
     dl.setTextAlignment(Qt.AlignmentFlag.AlignHCenter)
     dl.setCheckState(Qt.CheckState.Unchecked)
 
@@ -157,3 +157,15 @@ class TableRowWidget(QTableWidgetItem):
         has_filetype.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
         table.setItem(row_position, column_position, has_filetype)
+
+class SortableCheckboxTableWidgetItem(QTableWidgetItem):
+    """Modified checkbox that allows for sorting"""
+
+    def __lt__(self, other):
+        """Edit the less than operator"""
+
+        if self.checkState() == other.checkState():
+            return False
+        elif self.checkState() == Qt.CheckState.Checked:
+            return False
+        return True
