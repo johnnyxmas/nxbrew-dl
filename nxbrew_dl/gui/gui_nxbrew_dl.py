@@ -1,4 +1,5 @@
 import os
+import sys
 from functools import partial
 
 from PySide6.QtCore import (
@@ -11,9 +12,11 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
+    QMessageBox,
     QMainWindow,
     QFileDialog,
 )
+from packaging.version import Version
 
 import nxbrew_dl
 from .gui_about import AboutWindow
@@ -27,6 +30,7 @@ from .gui_utils import (
 from .layout_nxbrew_dl import Ui_nxbrew_dl
 from ..nxbrew_dl import NXBrew
 from ..util import (
+    check_github_version,
     get_game_dict,
     load_yml,
     save_yml,
@@ -68,6 +72,26 @@ class MainWindow(QMainWindow):
         icon.addFile(icon_path, QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.setWindowIcon(icon)
 
+        # Set up the logger
+        self.logger = get_gui_logger(log_level="INFO")
+        self.logger.warning("Do not close this window!")
+
+        # Check for version updates
+        self.logger.info("Checking for new versions online")
+        github_version, github_url  = check_github_version()
+        local_version = nxbrew_dl.__version__
+
+        new_version_available = False
+        if Version(local_version) < Version(github_version):
+            self.logger.info("New version of NXBrew-dl available!")
+            new_version_available = True
+        else:
+            self.logger.info("You have the latest version of NXBrew-dl")
+
+        self.update_notification = self.setup_update_notification(new_version_available,
+                                                                  url=github_url,
+                                                                  )
+
         # Load in various config files
         self.mod_dir = os.path.dirname(nxbrew_dl.__file__)
 
@@ -101,9 +125,6 @@ class MainWindow(QMainWindow):
 
         # Do an initial load of the config
         self.load_config()
-
-        self.logger = get_gui_logger(log_level="INFO")
-        self.logger.warning("Do not close this window!")
 
         # Set up the worker threads for later
         self.nxbrew_thread = None
@@ -150,6 +171,29 @@ class MainWindow(QMainWindow):
         self.search_bar.textChanged.connect(self.update_display)
 
         self.load_table()
+
+    def setup_update_notification(self,
+                                  new_version_available,
+                                  url,
+                                  ):
+        """Create a message box to open up to the latest GitHub release"""
+
+        if not new_version_available:
+            return None
+
+        # Open up a dialogue box to go to the webpage
+        update_box = QMessageBox()
+        reply = update_box.question(self,
+                            "Version update!",
+                            "Open latest GitHub release?",
+                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.logger.info("Opening GitHub, and closing down")
+            open_url(url)
+            sys.exit()
+
+        return update_box
 
     def get_game_dict(self):
         """Get game dictionary from NXBrew A-Z page"""
@@ -397,8 +441,12 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Close the application"""
 
-        self.logger.info("Closing down. Will save config")
-        self.save_config()
+        # Check if we've fully loaded, else just close it down
+        loaded = hasattr(self, "user_config")
+
+        if loaded:
+            self.logger.info("Closing down. Will save config")
+            self.save_config()
 
         event.accept()
 
