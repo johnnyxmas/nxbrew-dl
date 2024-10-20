@@ -7,8 +7,8 @@
 NXBrew-dl is intended to be an easy-to-user interface to download ROMs, DLC and update files for NSP. It does so via
 a GUI interface, allowing users to download items in bulk and keeping things up-to-date.
 
-As of now, this is in extremely early development. It will parse and download many ROMs, but be aware that currently
-if multiple regions exist, it will only download the US release. This will be upgrade in a future release.
+As of now, this is in extremely early development. It will parse and download many ROMs, and by default will only
+grab ROMs from either the USA or Europe (USA preferred) that are marked as having English language releases.
 
 Grab the latest release from the [releases page](https://github.com/bbtufty/nxbrew-dl/releases). 
 

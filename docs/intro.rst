@@ -13,8 +13,8 @@ a GUI interface, allowing users to download items in bulk and keeping things up-
 JDownloader to allow for easy download/extraction from multiple sites, and can optionally post info on the downloads
 to Discord.
 
-As of now, this is in extremely early development. It will parse and download many ROMs, but be aware that currently
-if multiple regions exist, it will only download the US release. This will be upgrade in a future release.
+As of now, this is in extremely early development. It will parse and download many ROMs, and by default will only
+grab ROMs from either the USA or Europe (USA preferred) that are marked as having English language releases.
 
 For details on installation, see :doc:`installation <installation>`.
 
