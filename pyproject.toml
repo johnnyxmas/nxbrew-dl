@@ -35,6 +35,7 @@ dependencies = [
     "colorlog>=6.8.2",
     "curl_cffi>=0.7.3",
     "discordwebhook>=1.0.3",
+    "logredactor>=0.0.2",
     "lxml>=0.5.3",
     "myjdapi>=1.1.7",
     "numpy>=2.1.2",

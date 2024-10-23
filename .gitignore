@@ -161,6 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Don't include cache/config
+# Don't include cache/config/logs
 config.yml
 cache.json
+log/

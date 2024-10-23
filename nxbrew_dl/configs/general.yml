@@ -4,6 +4,7 @@ dl_sites:
   - "GoFile"
   - "HexLoad"
   - "MegaUp"
+  - "MixDrop"
 
 dl_names:
   Base Game:

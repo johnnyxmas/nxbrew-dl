@@ -8,8 +8,8 @@ import numpy as np
 from pathvalidate import sanitize_filename
 
 import nxbrew_dl
-from ..gui.gui_utils import get_gui_logger
 from ..util import (
+    NXBrewLogger,
     discord_push,
     load_yml,
     load_json,
@@ -132,7 +132,7 @@ class NXBrew:
         self.user_cache_file = user_cache_file
 
         if logger is None:
-            logger = get_gui_logger(log_level="INFO")
+            logger = NXBrewLogger(log_level="INFO")
         self.logger = logger
 
         # Set up JDownloader
@@ -143,6 +143,10 @@ class NXBrew:
         jd.connect(self.user_config["jd_user"], self.user_config["jd_pass"])
 
         jd_device_name = self.user_config["jd_device"]
+
+        # Redact the device name
+        self.logger.update_redact_filter(jd_device_name)
+
         self.logger.info(f"Connecting to device {jd_device_name}")
         self.jd_device = jd.get_device(jd_device_name)
 
@@ -285,9 +289,12 @@ class NXBrew:
 
                         for dl_site in dl_sites:
                             if dl_site in release_dl:
-                                # print(release_dl[dl_site])
                                 self.logger.info(f"\t\t\t{dl_site}:")
                                 for dl_link in release_dl[dl_site]:
+
+                                    # Redact the DL link
+                                    self.logger.update_redact_filter(dl_link)
+
                                     self.logger.info(f"\t\t\t- {dl_link}")
 
             self.logger.info("")
@@ -536,6 +543,10 @@ class NXBrew:
                 self.logger.info(f"\t\tTrying {dl_site}:")
 
                 for d in dl_links:
+
+                    # Redact the link
+                    self.logger.update_redact_filter(d)
+
                     self.logger.info(f"\t\t\tLink: {d}")
                     if "ouo" in d:
                         self.logger.info(
@@ -544,6 +555,9 @@ class NXBrew:
                         d_final = bypass_ouo(d, logger=self.logger)
                     else:
                         d_final = copy.deepcopy(d)
+
+                    # Redact the link
+                    self.logger.update_redact_filter(d_final)
 
                     self.logger.info(f"\t\t\t\tAdding {d_final} to JDownloader")
                     self.jd_device.linkgrabber.add_links(
