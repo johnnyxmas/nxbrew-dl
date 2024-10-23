@@ -23,7 +23,6 @@ from .gui_about import AboutWindow
 from .gui_regions_languages import RegionLanguageWindow
 from .gui_utils import (
     open_url,
-    get_gui_logger,
     add_row_to_table,
     get_ordered_list,
 )
@@ -32,6 +31,7 @@ from ..nxbrew_dl import NXBrew
 from ..util import (
     check_github_version,
     get_game_dict,
+    NXBrewLogger,
     load_yml,
     save_yml,
     load_json,
@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(icon)
 
         # Set up the logger
-        self.logger = get_gui_logger(log_level="INFO")
+        self.logger = NXBrewLogger(log_level="INFO")
         self.logger.warning("Do not close this window!")
 
         # Check for version updates

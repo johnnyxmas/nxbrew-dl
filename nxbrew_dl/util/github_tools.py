@@ -1,5 +1,6 @@
 import requests
 
+
 def check_github_version():
     """Check NXBrew-dl version on GitHub. Returns version and associated URL"""
 

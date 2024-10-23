@@ -345,7 +345,13 @@ def RecaptchaV3():
     return answer
 
 
-def bypass_ouo(url, logger=None, impersonate="safari"):
+def bypass_ouo(
+    url,
+    logger=None,
+    impersonate="safari",
+    n_retry=0,
+    max_retries=5,
+):
     """Bypass OUO url
 
     Args:
@@ -353,7 +359,12 @@ def bypass_ouo(url, logger=None, impersonate="safari"):
         logger (logging.Logger): Logger to use. Defaults to None,
             which will not log anything
         impersonate (str): Type of browser to impersonate
+        n_retry (int): Current retry. Defaults to 0
+        max_retries (int): Maximum number of retries. Defaults to 5
     """
+
+    if n_retry >= max_retries:
+        raise ValueError("Max retries exceeded!")
 
     client = cffi_requests.Session()
     client.headers.update(
@@ -372,15 +383,20 @@ def bypass_ouo(url, logger=None, impersonate="safari"):
     temp_url_id = tempurl.split("/")[-1]
     res = client.get(tempurl, impersonate=impersonate)
 
-    # If we get a weird response
+    # If we get a weird response, try again
     status_code = res.status_code
-    while status_code not in [200, 302]:
+    if status_code not in [200, 302]:
 
         if logger is not None:
             logger.warning(f"Received status code {status_code}. Waiting then retrying")
 
         time.sleep(10)
-        res = client.get(tempurl, impersonate=impersonate)
+        bypass_ouo(
+            url,
+            logger=logger,
+            impersonate=impersonate,
+            n_retry=n_retry + 1,
+        )
 
     next_url = f"{p.scheme}://{p.hostname}/go/{temp_url_id}"
 
@@ -406,7 +422,7 @@ def bypass_ouo(url, logger=None, impersonate="safari"):
         )
 
         status_code = res.status_code
-        while status_code not in [200, 302]:
+        if status_code not in [200, 302]:
 
             if logger is not None:
                 logger.warning(
@@ -414,14 +430,12 @@ def bypass_ouo(url, logger=None, impersonate="safari"):
                 )
 
             time.sleep(10)
-            res = client.post(
-                next_url,
-                data=data,
-                headers=h,
-                allow_redirects=False,
+            bypass_ouo(
+                url,
+                logger=logger,
                 impersonate=impersonate,
+                n_retry=n_retry + 1,
             )
-            status_code = res.status_code
 
         next_url = f"{p.scheme}://{p.hostname}/xreallcygo/{temp_url_id}"
 
