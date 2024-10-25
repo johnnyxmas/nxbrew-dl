@@ -1,6 +1,9 @@
 0.3 (Unreleased)
 ================
 
+- Make URL de-shortening less flaky [#13]
+- Simplified fetching thumbnail URL [#13]
+- Fixed cases where links could be missed [#13]
 - GUI updates [#12]
 - Logging updates [#11]
 - Update docs to reflect region preferences [#10]

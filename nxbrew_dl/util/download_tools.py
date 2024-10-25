@@ -25,6 +25,7 @@ def get_dl_dict(
     dl_names,
     regions=None,
     languages=None,
+    regionless_titles=None,
     implied_languages=None,
 ):
     """For a particular page, parse out download links
@@ -41,16 +42,21 @@ def get_dl_dict(
             to None, which will use an empty list
         languages (dict): list of languages potentially parse. Defaults
             to None, which will use an empty dict
+        regionless_titles (list): list of titles that have no region info.
+            Defaults to None, which will use an empty list
         implied_languages (dict): Dictionary of mappings from regions
             to implied languages. Defaults to None, which will use
             an empty dict
     """
 
-    if implied_languages is None:
-        implied_languages = {}
-
     if regions is None:
         regions = []
+
+    if regionless_titles is None:
+        regionless_titles = []
+
+    if implied_languages is None:
+        implied_languages = {}
 
     dl_dict = {}
 
@@ -97,6 +103,15 @@ def get_dl_dict(
             if len(parsed_languages) == 0:
                 parsed_languages = ["All"]
 
+            tag = tag.find_next("p")
+
+        # Alternatively, we might find something that looks like a region title,
+        # but doesn't contain any useful info
+
+        elif any([n in tag.text for n in regionless_titles]):
+
+            parsed_regions = ["All"]
+            parsed_languages = ["All"]
             tag = tag.find_next("p")
 
         else:
@@ -284,7 +299,12 @@ def parse_base_game(
             finding_links = False
 
     # Finally, hunt through to the next tag WITHOUT a link in
-    tag = tag.find_next("p", href=False)
+    found_links = True
+    while found_links:
+        tag = tag.find_next("p", href=False)
+        links = tag.find_all("a", href=True)
+        if len(links) == 0:
+            found_links = False
 
     return tag, base_game_dict
 
@@ -406,7 +426,24 @@ def bypass_ouo(
             break
 
         bs4 = BeautifulSoup(res.content, "lxml")
-        inputs = bs4.form.findAll("input", {"name": re.compile(r"token$")})
+
+        # Try and find the token. If we don't find anything, assume
+        # it's broken and try again
+        inputs = None
+        try:
+            inputs = bs4.form.findAll("input", {"name": re.compile(r"token$")})
+        except AttributeError:
+            if logger is not None:
+                logger.warning(f"Page load error. Waiting then retrying")
+
+            time.sleep(10)
+            bypass_ouo(
+                url,
+                logger=logger,
+                impersonate=impersonate,
+                n_retry=n_retry + 1,
+            )
+
         data = {i.get("name"): i.get("value") for i in inputs}
         data["x-token"] = RecaptchaV3()
 
