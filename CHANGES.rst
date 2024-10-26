@@ -1,3 +1,8 @@
+0.4 (Unreleased)
+================
+
+- Exclude log folder so pip builds successfully [#16]
+
 0.3 (2024-10-26)
 ================
 

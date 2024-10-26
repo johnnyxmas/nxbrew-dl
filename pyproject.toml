@@ -57,6 +57,9 @@ docs = [
 "Bug Reports" = "https://github.com/bbtufty/nxbrew-dl/issues"
 "Source" = "https://github.com/bbtufty/nxbrew-dl"
 
+[tool.setuptools.packages.find]
+exclude = ["log/*"]
+
 [build-system]
 requires = [
     "setuptools>=43.0.0",
