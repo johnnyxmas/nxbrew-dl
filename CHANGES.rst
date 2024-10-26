@@ -1,6 +1,7 @@
-0.3 (Unreleased)
+0.3 (2024-10-26)
 ================
 
+- Bump to v0.3 [#14]
 - Make URL de-shortening less flaky [#13]
 - Simplified fetching thumbnail URL [#13]
 - Fixed cases where links could be missed [#13]
