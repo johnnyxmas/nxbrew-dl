@@ -127,10 +127,7 @@ def get_thumb_url(soup):
         soup (bs4.BeautifulSoup): soup object to find languages in
     """
 
-    # Get the main content, then find the first figure which we'll take as the thumbnail
-    content = soup.find("div", {"id": "content"})
-    thumb = content.findAll("figure")[0]
-    img = thumb.find("img")
-    url = img["src"]
+    img = soup.find("meta", {"property": "og:image"})
+    url = img["content"]
 
     return url

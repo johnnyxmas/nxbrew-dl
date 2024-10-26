@@ -251,6 +251,7 @@ class NXBrew:
 
         # Pull out useful things from the config
         regions = list(self.general_config["regions"].keys())
+        regionless_titles = self.general_config["regionless_titles"]
         languages = self.general_config["languages"]
         implied_languages = self.general_config["implied_languages"]
         dl_sites = self.general_config["dl_sites"]
@@ -259,12 +260,16 @@ class NXBrew:
         dl_dict = get_dl_dict(
             soup,
             regions=regions,
+            regionless_titles=regionless_titles,
             languages=languages,
             implied_languages=implied_languages,
             dl_sites=dl_sites,
             dl_names=dl_names,
         )
         n_releases = len(dl_dict)
+
+        if n_releases == 0:
+            raise ValueError("No releases found")
 
         self.logger.info(f"Found {n_releases} release(s):")
 

@@ -3,6 +3,7 @@ dl_sites:
   - "FreeDL"
   - "GoFile"
   - "HexLoad"
+  - "HexUpload"
   - "MegaUp"
   - "MixDrop"
 
@@ -16,6 +17,9 @@ dl_names:
 
 forbidden_titles:
   - "Latest RAW Game Updates [17th April 2024][47 New Updates] [DISCONTINUED]"
+
+regionless_titles:
+  - "Full Game"
 
 default_selected_regions:
   - "USA"
