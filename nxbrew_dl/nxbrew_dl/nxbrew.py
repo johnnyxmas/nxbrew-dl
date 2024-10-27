@@ -71,6 +71,8 @@ class NXBrew:
     def __init__(
         self,
         to_download,
+        progress_bar=None,
+        progress_bar_label=None,
         general_config=None,
         regex_config=None,
         user_config=None,
@@ -85,6 +87,12 @@ class NXBrew:
 
         Args:
             to_download (dict): Dictionary of files to download
+            progress_bar (QProgressBar, optional): Progress bar widget.
+                Defaults to None, which will do nothing fancy with the
+                progress bar
+            progress_bar_label (QLabel, optional): If set, will put
+                the game title in a progress bar label. Defaults to
+                None
             general_config (dict): Dictionary for default configuration
             regex_config (dict): Dictionary for regex configuration
             user_config (dict): Dictionary for user configuration
@@ -157,20 +165,35 @@ class NXBrew:
         self.discord_url = discord_url
 
         self.to_download = to_download
+        self.progress_bar = progress_bar
+        self.progress_bar_label = progress_bar_label
 
         self.dry_run = self.user_config.get("dry_run", False)
 
     def run(self):
         """Run NXBrew-dl"""
 
+        n_downloads = len(self.to_download)
+
+        if self.progress_bar is not None:
+            # Reset progress bar to 0
+            self.progress_bar.setValue(0)
+
         self.logger.info("")
         self.logger.info(f"=" * 80)
         self.logger.info(f"{' '*30}STARTING NXBREW-DL{' '*30}")
         self.logger.info(f"=" * 80)
 
-        for name in self.to_download:
+        for i_name, name in enumerate(self.to_download):
+
+            progress_val = 100 * (i_name + 1) / n_downloads
 
             url = self.to_download[name]
+
+            if self.progress_bar is not None:
+                self.progress_bar_label.setText(
+                    f"{i_name + 1}/{n_downloads}: {name}"
+                )
 
             self.logger.info("")
             self.logger.info(f"=" * 80)
@@ -182,6 +205,10 @@ class NXBrew:
             )
             self.logger.info(f"=" * 80)
             self.logger.info("")
+
+            if self.progress_bar is not None:
+                # Reset progress bar to 0
+                self.progress_bar.setValue(progress_val)
 
         # Clean up
         self.logger.info("Performing final cache/disk clean up")
@@ -440,7 +467,9 @@ class NXBrew:
                         f"\t{DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']} already downloaded. Will skip"
                     )
                 else:
-                    self.logger.info(f"\tDownloading {DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']}")
+                    self.logger.info(
+                        f"\tDownloading {DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']}"
+                    )
                     out_dir = os.path.join(self.user_config["download_dir"], dl_dir)
 
                     # Sanitize the package name so we're safe here

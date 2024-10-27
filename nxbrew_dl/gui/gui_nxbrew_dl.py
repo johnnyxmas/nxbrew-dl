@@ -415,6 +415,8 @@ class MainWindow(QMainWindow):
         self.nxbrew_thread = QThread()
         self.nxbrew_worker = NXBrewWorker(
             to_download=to_download,
+            progress_bar=self.ui.progressBar,
+            progress_bar_label=self.ui.labelProgressBar,
             user_config=self.user_config,
             user_cache=self.user_cache,
             logger=self.logger,
@@ -503,6 +505,8 @@ class NXBrewWorker(QObject):
     def __init__(
         self,
         to_download,
+        progress_bar=None,
+        progress_bar_label=None,
         general_config=None,
         regex_config=None,
         user_config=None,
@@ -513,6 +517,12 @@ class NXBrewWorker(QObject):
 
         Args:
             to_download (dict): Dictionary of ROMs to download
+            progress_bar (QProgressBar, optional): Progress bar widget.
+                Defaults to None, which will do nothing fancy with the
+                progress bar
+            progress_bar_label (QLabel, optional): If set, will put
+                the game title in a progress bar label. Defaults to
+                None
             general_config (dict): Dictionary of general configuration.
                 Defaults to None, which will load in from expected path
             regex_config (dict): Dictionary of regex configuration.
@@ -527,6 +537,8 @@ class NXBrewWorker(QObject):
         super().__init__()
 
         self.to_download = to_download
+        self.progress_bar = progress_bar
+        self.progress_bar_label = progress_bar_label
         self.general_config = general_config
         self.regex_config = regex_config
         self.user_config = user_config
@@ -538,6 +550,8 @@ class NXBrewWorker(QObject):
 
         nx = NXBrew(
             to_download=self.to_download,
+            progress_bar=self.progress_bar,
+            progress_bar_label=self.progress_bar_label,
             general_config=self.general_config,
             regex_config=self.regex_config,
             user_config=self.user_config,
@@ -548,6 +562,7 @@ class NXBrewWorker(QObject):
         try:
             nx.run()
         except Exception as e:
+            self.logger.warning("Ran into error! Message is:")
             self.logger.warning(e.args[0])
 
         self.finished.emit()

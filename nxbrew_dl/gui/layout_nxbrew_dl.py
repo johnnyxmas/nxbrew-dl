@@ -19,15 +19,15 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QApplication, QButtonGroup,
     QCheckBox, QFrame, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QMainWindow, QMenu,
-    QMenuBar, QPushButton, QRadioButton, QSizePolicy,
-    QSpacerItem, QStatusBar, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QWidget)
+    QMenuBar, QProgressBar, QPushButton, QRadioButton,
+    QSizePolicy, QSpacerItem, QStatusBar, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_nxbrew_dl(object):
     def setupUi(self, nxbrew_dl):
         if not nxbrew_dl.objectName():
             nxbrew_dl.setObjectName(u"nxbrew_dl")
-        nxbrew_dl.resize(1187, 907)
+        nxbrew_dl.resize(1187, 920)
         self.actionDocumentation = QAction(nxbrew_dl)
         self.actionDocumentation.setObjectName(u"actionDocumentation")
         icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.GoHome))
@@ -321,6 +321,37 @@ class Ui_nxbrew_dl(object):
 
         self.verticalLayout.addLayout(self.horizontalLayoutConfigGames)
 
+        self.horizontalLayoutProgressBar = QHBoxLayout()
+        self.horizontalLayoutProgressBar.setObjectName(u"horizontalLayoutProgressBar")
+        self.labelProgressBar = QLabel(self.centralwidget)
+        self.labelProgressBar.setObjectName(u"labelProgressBar")
+        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.labelProgressBar.sizePolicy().hasHeightForWidth())
+        self.labelProgressBar.setSizePolicy(sizePolicy4)
+
+        self.horizontalLayoutProgressBar.addWidget(self.labelProgressBar)
+
+        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayoutProgressBar.addItem(self.horizontalSpacer_5)
+
+        self.progressBar = QProgressBar(self.centralwidget)
+        self.progressBar.setObjectName(u"progressBar")
+        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.progressBar.sizePolicy().hasHeightForWidth())
+        self.progressBar.setSizePolicy(sizePolicy5)
+        self.progressBar.setMinimumSize(QSize(500, 0))
+        self.progressBar.setValue(0)
+
+        self.horizontalLayoutProgressBar.addWidget(self.progressBar)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayoutProgressBar)
+
         self.verticalSpacerConfigButtons = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
         self.verticalLayout.addItem(self.verticalSpacerConfigButtons)
@@ -469,6 +500,8 @@ class Ui_nxbrew_dl(object):
 #if QT_CONFIG(tooltip)
         ___qtablewidgetitem5.setToolTip(QCoreApplication.translate("nxbrew_dl", u"Game has DLC", None));
 #endif // QT_CONFIG(tooltip)
+        self.labelProgressBar.setText("")
+        self.progressBar.setFormat(QCoreApplication.translate("nxbrew_dl", u"%p%", None))
 #if QT_CONFIG(statustip)
         self.pushButtonExit.setStatusTip(QCoreApplication.translate("nxbrew_dl", u"Exit NXBrew-dl", None))
 #endif // QT_CONFIG(statustip)
