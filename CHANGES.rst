@@ -1,6 +1,7 @@
 0.4 (Unreleased)
 ================
 
+- Add progress bar to GUI [#19]
 - Keep games list searchable even when downloads are running [#18]
 - If error occurs, don't crash GUI [#17]
 - Exclude log folder so pip builds successfully [#16]
