@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
 
         # Check for version updates
         self.logger.info("Checking for new versions online")
-        github_version, github_url  = check_github_version()
+        github_version, github_url = check_github_version()
         local_version = nxbrew_dl.__version__
 
         new_version_available = False
@@ -88,9 +88,10 @@ class MainWindow(QMainWindow):
         else:
             self.logger.info("You have the latest version of NXBrew-dl")
 
-        self.update_notification = self.setup_update_notification(new_version_available,
-                                                                  url=github_url,
-                                                                  )
+        self.update_notification = self.setup_update_notification(
+            new_version_available,
+            url=github_url,
+        )
 
         # Load in various config files
         self.mod_dir = os.path.dirname(nxbrew_dl.__file__)
@@ -172,10 +173,11 @@ class MainWindow(QMainWindow):
 
         self.load_table()
 
-    def setup_update_notification(self,
-                                  new_version_available,
-                                  url,
-                                  ):
+    def setup_update_notification(
+        self,
+        new_version_available,
+        url,
+    ):
         """Create a message box to open up to the latest GitHub release"""
 
         if not new_version_available:
@@ -183,10 +185,12 @@ class MainWindow(QMainWindow):
 
         # Open up a dialogue box to go to the webpage
         update_box = QMessageBox()
-        reply = update_box.question(self,
-                            "Version update!",
-                            "Open latest GitHub release?",
-                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = update_box.question(
+            self,
+            "Version update!",
+            "Open latest GitHub release?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
 
         if reply == QMessageBox.StandardButton.Yes:
             self.logger.info("Opening GitHub, and closing down")
@@ -254,7 +258,6 @@ class MainWindow(QMainWindow):
             found_cache_item = False
             for r in range(self.game_table.rowCount()):
                 if self.game_table.item(r, 0).toolTip() == cache_item:
-
                     self.game_table.item(r, 1).setCheckState(Qt.CheckState.Checked)
                     found_cache_item = True
                     break
@@ -405,7 +408,6 @@ class MainWindow(QMainWindow):
 
                 for g in self.game_dict:
                     if self.game_dict[g]["url"] == url:
-
                         n = self.game_dict[g]["short_name"]
                         to_download.update({n: url})
 
@@ -428,13 +430,14 @@ class MainWindow(QMainWindow):
 
         # When finished, re-enable the UI
         self.nxbrew_thread.finished.connect(
-            lambda: self.ui.centralwidget.setEnabled(True)
+            lambda: self.enable_disable_ui(mode="enable")
         )
+
         # Start the thread
         self.nxbrew_thread.start()
 
         # Disable the UI
-        self.ui.centralwidget.setEnabled(False)
+        self.enable_disable_ui(mode="disable")
 
         return True
 
@@ -449,6 +452,47 @@ class MainWindow(QMainWindow):
             self.save_config()
 
         event.accept()
+
+    def enable_disable_ui(self, mode="disable"):
+        """Selective enable/disable parts of the UI
+
+        Args:
+            mode: Whether to 'enable' or 'disable'. Defaults
+                to disable
+        """
+
+        # Disable the various UI elements
+        ui_elements = [
+            self.ui.lineEditNXBrewURL,
+            self.ui.lineEditDownloadDir,
+            self.ui.pushButtonDownloadDir,
+            self.ui.lineEditJDownloaderDevice,
+            self.ui.lineEditJDownloaderUser,
+            self.ui.lineEditJDownloaderPass,
+            self.ui.radioButtonPreferNSP,
+            self.ui.radioButtonPreferXCI,
+            self.ui.checkBoxDownloadUpdates,
+            self.ui.checkBoxDownloadDLC,
+            self.ui.pushButtonRegionLanguage,
+            self.ui.checkBoxDryRun,
+            self.ui.lineEditDiscordURL,
+            self.ui.tableGames,
+            self.ui.pushButtonRefresh,
+            self.ui.pushButtonRun,
+            self.ui.pushButtonExit,
+        ]
+
+        for e in ui_elements:
+            if mode == "disable":
+                e.setEnabled(False)
+            elif mode == "enable":
+                e.setEnabled(True)
+            else:
+                raise ValueError(
+                    f"Button {mode} should be one of 'disable' or 'enable'"
+                )
+
+        return True
 
 
 class NXBrewWorker(QObject):
