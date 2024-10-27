@@ -2,6 +2,7 @@
 ================
 
 - Exclude log folder so pip builds successfully [#16]
+- Further fixes for link shortening [#15]
 
 0.3 (2024-10-26)
 ================

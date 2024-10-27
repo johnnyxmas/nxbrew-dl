@@ -1,3 +1,4 @@
+import random
 import re
 import time
 from urllib.parse import urlparse
@@ -368,7 +369,7 @@ def RecaptchaV3():
 def bypass_ouo(
     url,
     logger=None,
-    impersonate="safari",
+    impersonate=None,
     n_retry=0,
     max_retries=5,
 ):
@@ -378,13 +379,17 @@ def bypass_ouo(
         url (str): URL to bypass
         logger (logging.Logger): Logger to use. Defaults to None,
             which will not log anything
-        impersonate (str): Type of browser to impersonate
+        impersonate (str): Type of browser to impersonate. Defaults
+            to None, which will choose randomly from a selection
         n_retry (int): Current retry. Defaults to 0
         max_retries (int): Maximum number of retries. Defaults to 5
     """
 
     if n_retry >= max_retries:
         raise ValueError("Max retries exceeded!")
+
+    if impersonate is None:
+        impersonate = random.choice(["chrome", "safari", "edge"])
 
     client = cffi_requests.Session()
     client.headers.update(
@@ -427,12 +432,15 @@ def bypass_ouo(
 
         bs4 = BeautifulSoup(res.content, "lxml")
 
-        # Try and find the token. If we don't find anything, assume
-        # it's broken and try again
+        # Try and find the token
         inputs = None
         try:
             inputs = bs4.form.findAll("input", {"name": re.compile(r"token$")})
         except AttributeError:
+            pass
+
+        # Catch problems here
+        if inputs is None:
             if logger is not None:
                 logger.warning(f"Page load error. Waiting then retrying")
 
