@@ -500,6 +500,10 @@ class NXBrewWorker(QObject):
             user_cache=self.user_cache,
             logger=self.logger,
         )
-        nx.run()
+
+        try:
+            nx.run()
+        except Exception as e:
+            self.logger.warning(e.args[0])
 
         self.finished.emit()
