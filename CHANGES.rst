@@ -1,6 +1,7 @@
 0.4 (Unreleased)
 ================
 
+- Allow for generic base game [#21]
 - Catch MyJDAPI errors [#20]
 - Really fixed ouo de-shortener (please) [#20]
 - Add progress bar to GUI [#19]

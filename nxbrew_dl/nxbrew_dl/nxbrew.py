@@ -21,20 +21,6 @@ from ..util import (
     bypass_ouo,
 )
 
-DL_MAPPING = {
-    "base_game_nsp": "Games",
-    "base_game_xci": "Games",
-    "dlc": "DLC",
-    "update": "Updates",
-}
-
-DL_NAME_MAPPING = {
-    "base_game_nsp": "Base Game (NSP)",
-    "base_game_xci": "Base Game (XCI)",
-    "dlc": "DLC",
-    "update": "Update",
-}
-
 
 def add_ordered_score(
     releases,
@@ -107,6 +93,7 @@ class NXBrew:
         if general_config is None:
             general_config = load_yml(general_config_filename)
         self.general_config = general_config
+        self.dl_mappings = self.general_config["dl_mappings"]
 
         regex_config_filename = os.path.join(self.mod_dir, "configs", "regex.yml")
         if regex_config is None:
@@ -181,7 +168,7 @@ class NXBrew:
 
         self.logger.info("")
         self.logger.info(f"=" * 80)
-        self.logger.info(f"{' '*30}STARTING NXBREW-DL{' '*30}")
+        self.logger.info(f"{' ' * 30}STARTING NXBREW-DL{' ' * 30}")
         self.logger.info(f"=" * 80)
 
         for i_name, name in enumerate(self.to_download):
@@ -191,9 +178,7 @@ class NXBrew:
             url = self.to_download[name]
 
             if self.progress_bar is not None:
-                self.progress_bar_label.setText(
-                    f"{i_name + 1}/{n_downloads}: {name}"
-                )
+                self.progress_bar_label.setText(f"{i_name + 1}/{n_downloads}: {name}")
 
             self.logger.info("")
             self.logger.info(f"=" * 80)
@@ -282,7 +267,6 @@ class NXBrew:
         languages = self.general_config["languages"]
         implied_languages = self.general_config["implied_languages"]
         dl_sites = self.general_config["dl_sites"]
-        dl_names = self.general_config["dl_names"]
 
         dl_dict = get_dl_dict(
             soup,
@@ -291,7 +275,7 @@ class NXBrew:
             languages=languages,
             implied_languages=implied_languages,
             dl_sites=dl_sites,
-            dl_names=dl_names,
+            dl_mappings=self.dl_mappings,
         )
         n_releases = len(dl_dict)
 
@@ -311,23 +295,27 @@ class NXBrew:
 
             # Loop over the various file types, and print out the links and associated
             # sites
-            for dl_name in DL_NAME_MAPPING:
-                clean_dl_name = DL_NAME_MAPPING[dl_name]
+            for dl_mapping in self.dl_mappings:
 
-                if any([key == dl_name for key in dl_dict[release]]):
-                    self.logger.info(f"\t{clean_dl_name}:")
-                    for release_dl in dl_dict[release][dl_name]:
-                        self.logger.info(f"\t\t{release_dl['full_name']}:")
+                for dl_tag in self.dl_mappings[dl_mapping]["dl_tags"]:
 
-                        for dl_site in dl_sites:
-                            if dl_site in release_dl:
-                                self.logger.info(f"\t\t\t{dl_site}:")
-                                for dl_link in release_dl[dl_site]:
+                    clean_dl_name = self.dl_mappings[dl_mapping]["dl_tags"][dl_tag][
+                        "dl_name_mapping"
+                    ]
 
-                                    # Redact the DL link
-                                    self.logger.update_redact_filter(dl_link)
+                    if any([key == dl_tag for key in dl_dict[release]]):
+                        self.logger.info(f"\t{clean_dl_name}:")
+                        for release_dl in dl_dict[release][dl_tag]:
+                            self.logger.info(f"\t\t{release_dl['full_name']}:")
 
-                                    self.logger.info(f"\t\t\t- {dl_link}")
+                            for dl_site in dl_sites:
+                                if dl_site in release_dl:
+                                    self.logger.info(f"\t\t\t{dl_site}:")
+                                    for dl_link in release_dl[dl_site]:
+                                        # Redact the DL link
+                                        self.logger.update_redact_filter(dl_link)
+
+                                        self.logger.info(f"\t\t\t- {dl_link}")
 
             self.logger.info("")
 
@@ -448,57 +436,62 @@ class NXBrew:
         # Hooray! We're finally ready to start downloading. Map things to folder and let's get going
         self.logger.info("Beginning download process:")
 
-        for dl_key in DL_MAPPING:
+        for dl_mapping in self.dl_mappings:
+            dl_dir = self.dl_mappings[dl_mapping]["directory_name"]
 
-            dl_dir = DL_MAPPING[dl_key]
+            for dl_key in self.dl_mappings[dl_mapping]["dl_tags"]:
 
-            # If we don't have anything to download, skip
-            if dl_key not in dl_dict:
-                continue
+                # If we don't have anything to download, skip
+                if dl_key not in dl_dict:
+                    continue
 
-            if dl_key not in self.user_cache[url]:
-                self.user_cache[url][dl_key] = []
+                dl_key_clean = self.dl_mappings[dl_mapping]["dl_tags"][dl_key][
+                    "dl_name_mapping"
+                ]
 
-            # Loop over items in the list
-            for dl_info in dl_dict[dl_key]:
+                if dl_key not in self.user_cache[url]:
+                    self.user_cache[url][dl_key] = []
 
-                if dl_info["full_name"] in self.user_cache[url][dl_key]:
-                    self.logger.info(
-                        f"\t{DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']} already downloaded. Will skip"
-                    )
-                else:
-                    self.logger.info(
-                        f"\tDownloading {DL_NAME_MAPPING[dl_key]}: {dl_info['full_name']}"
-                    )
-                    out_dir = os.path.join(self.user_config["download_dir"], dl_dir)
+                # Loop over items in the list
+                for dl_info in dl_dict[dl_key]:
 
-                    # Sanitize the package name so we're safe here
-                    package_name = sanitize_filename(name)
-
-                    self.run_jdownloader(
-                        dl_dict=dl_info,
-                        out_dir=out_dir,
-                        package_name=package_name,
-                    )
-                    self.logger.info("")
-
-                    # Update and save out cache
-                    self.user_cache[url][dl_key].append(dl_info["full_name"])
-                    save_json(
-                        self.user_cache,
-                        self.user_cache_file,
-                        sort_key="name",
-                    )
-
-                    # Post to discord
-                    if self.discord_url is not None:
-                        self.post_to_discord(
-                            name=name,
-                            url=url,
-                            added_type=DL_NAME_MAPPING[dl_key],
-                            description=dl_info["full_name"],
-                            thumb_url=thumb_url,
+                    if dl_info["full_name"] in self.user_cache[url][dl_key]:
+                        self.logger.info(
+                            f"\t{dl_key_clean}: {dl_info['full_name']} already downloaded. Will skip"
                         )
+                    else:
+                        self.logger.info(
+                            f"\tDownloading {dl_key_clean}: {dl_info['full_name']}"
+                        )
+                        out_dir = os.path.join(self.user_config["download_dir"], dl_dir)
+
+                        # Sanitize the package name so we're safe here
+                        package_name = sanitize_filename(name)
+
+                        self.run_jdownloader(
+                            dl_dict=dl_info,
+                            out_dir=out_dir,
+                            package_name=package_name,
+                        )
+                        self.logger.info("")
+
+                        # Update and save out cache
+                        self.user_cache[url][dl_key].append(dl_info["full_name"])
+                        save_json(
+                            self.user_cache,
+                            self.user_cache_file,
+                            sort_key="name",
+                        )
+
+                        # Post to discord
+                        if self.discord_url is not None:
+                            self.post_to_discord(
+                                name=name,
+                                url=url,
+                                added_type=dl_key_clean,
+                                description=dl_info["full_name"],
+                                thumb_url=thumb_url,
+                            )
 
         self.logger.info("")
         self.logger.info("All downloads complete")
@@ -781,10 +774,11 @@ class NXBrew:
 
                 g_sanitized = sanitize_filename(g)
 
-                for dl_dir in DL_MAPPING:
+                for dl_mapping in self.dl_mappings:
+                    dl_dir = self.dl_mappings[dl_mapping]["directory_name"]
                     g_dir = os.path.join(
                         self.user_config["download_dir"],
-                        DL_MAPPING[dl_dir],
+                        dl_dir,
                         g_sanitized,
                     )
                     if os.path.exists(g_dir):
@@ -799,11 +793,21 @@ class NXBrew:
         # Now, do a pass where we'll get rid of DLC/updates if they're no longer requested
         for key in ["dlc", "update"]:
             if not self.user_config[f"download_{key}"]:
-                self.logger.info(
-                    f"\tRemoving {DL_NAME_MAPPING[key]} from cache and disk"
-                )
+
+                dl_mapping = {
+                    "dlc": "DLC",
+                    "update": "Update",
+                }[key]
+
+                dl_key_clean = self.dl_mappings[dl_mapping]["dl_tags"][key][
+                    "dl_name_mapping"
+                ]
+                dl_dir = self.dl_mappings[dl_mapping]["directory_name"]
+
+                self.logger.info(f"\tRemoving {dl_key_clean} from cache and disk")
                 out_dir = os.path.join(
-                    self.user_config["download_dir"], DL_MAPPING[key]
+                    self.user_config["download_dir"],
+                    dl_dir,
                 )
                 if os.path.exists(out_dir):
                     shutil.rmtree(out_dir)

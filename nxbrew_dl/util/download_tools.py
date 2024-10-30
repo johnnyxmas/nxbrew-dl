@@ -23,7 +23,7 @@ ANCHOR_URL = (
 def get_dl_dict(
     soup,
     dl_sites,
-    dl_names,
+    dl_mappings,
     regions=None,
     languages=None,
     regionless_titles=None,
@@ -38,7 +38,7 @@ def get_dl_dict(
     Args:
         soup (bs4.BeautifulSoup): soup object to parse
         dl_sites (list): List of download sites in preference order
-        dl_names (dict): Dictionary of names to map to download types
+        dl_mappings (dict): Dictionary of mappings for download types
         regions (list): list of regions potentially parse. Defaults
             to None, which will use an empty list
         languages (dict): list of languages potentially parse. Defaults
@@ -130,31 +130,33 @@ def get_dl_dict(
         while still_hunting_dl:
             found_anything_dl = False
 
-            for dl_name in dl_names:
+            for dl_mapping in dl_mappings:
 
                 tag_no_brackets = tag.text.split("(")[0]
 
-                if any([n in tag_no_brackets for n in dl_names[dl_name]]):
+                tag_names = dl_mappings[dl_mapping]["tag_names"]
 
-                    if dl_name == "Base Game":
+                if any([n in tag_no_brackets for n in tag_names]):
+
+                    if dl_mapping == "Base Game":
                         tag, parsed_dict = parse_base_game(
                             tag,
                             dl_sites=dl_sites,
-                            dl_names=dl_names,
+                            dl_mappings=dl_mappings,
                         )
-                    elif dl_name == "DLC":
+                    elif dl_mapping == "DLC":
                         tag, parsed_dict = parse_inline(
                             tag,
                             key="dlc",
                             dl_sites=dl_sites,
                         )
-                    elif dl_name == "Update":
+                    elif dl_mapping == "Update":
                         tag, parsed_dict = parse_inline(
                             tag, key="update", dl_sites=dl_sites
                         )
                     else:
                         raise ValueError(
-                            f"Name should contain one of {', '.join(dl_names)}"
+                            f"Name should contain one of: {', '.join(dl_mappings.keys())}. Got {tag.text}"
                         )
 
                     # Get out the key, and append to the full dictionary
@@ -174,12 +176,9 @@ def get_dl_dict(
                 still_hunting_dl = False
 
         # If we don't have anything useful in here, delete the release and leave
-        dl_keys = [
-            "base_game_nsp",
-            "base_game_xci",
-            "dlc",
-            "update",
-        ]
+        dl_keys = []
+        for dl_mapping in dl_mappings:
+            dl_keys.extend(list(dl_mappings[dl_mapping]["dl_tags"].keys()))
 
         if not any([n in dl_dict[current_release] for n in dl_keys]):
             del dl_dict[current_release]
@@ -235,7 +234,7 @@ def parse_language_tag(tag, languages=None):
 def parse_base_game(
     tag,
     dl_sites,
-    dl_names,
+    dl_mappings,
 ):
     """Parse out links for base game
 
@@ -245,17 +244,25 @@ def parse_base_game(
     Args:
         tag (bs4.Tag): starting tag object
         dl_sites (list): list of DL sites to look for in links
-        dl_names (dict): Dictionary of names to map to download types
+        dl_mappings (dict): Dictionary of names to map to download types
     """
 
     base_game_dict = {}
 
-    if "NSP" in tag.text:
+    # Catch NSPs/XCIs (most common), and undefined names (occasional),
+    # error out for others
+    t = tag.text
+
+    if "NSP" in t and "XCI" not in t:
         game_dict_key = "base_game_nsp"
-    elif "XCI" in tag.text:
+    elif "XCI" in t and "NSP" not in t:
         game_dict_key = "base_game_xci"
+    elif "NSP" not in t and "XCI" not in t:
+        game_dict_key = "base_game_undefined"
+    elif "NSP" in t and "XCI" in t:
+        raise ValueError(f"Name {t} implies both NSP *and* XCI!")
     else:
-        raise ValueError(f"Expecting name in form Base Game NSP/XCI, not {tag.text}")
+        raise ValueError(f"Unsure how to parse Base Game name: {t}")
 
     base_game_dict[game_dict_key] = {}
 
@@ -282,14 +289,17 @@ def parse_base_game(
 
                 found_edge_case = False
 
-                for dl_name in dl_names:
-                    if any([n in h.text for n in dl_names[dl_name]]):
+                for dl_mapping in dl_mappings:
 
-                        if dl_name not in base_game_dict:
-                            base_game_dict[dl_name.lower()] = {}
-                            base_game_dict[dl_name.lower()]["full_name"] = h.text
-                            base_game_dict[dl_name.lower()][site] = []
-                        base_game_dict[dl_name.lower()][site].append(h["href"])
+                    tag_names = dl_mappings[dl_mapping]["tag_names"]
+
+                    if any([n in h.text for n in tag_names]):
+
+                        if dl_mapping not in base_game_dict:
+                            base_game_dict[dl_mapping.lower()] = {}
+                            base_game_dict[dl_mapping.lower()]["full_name"] = h.text
+                            base_game_dict[dl_mapping.lower()][site] = []
+                        base_game_dict[dl_mapping.lower()][site].append(h["href"])
 
                         found_edge_case = True
                         break
@@ -451,7 +461,7 @@ def bypass_ouo(
                 print(f"Page load error. Waiting then retrying")
 
             time.sleep(10)
-            bypassed_url =  bypass_ouo(
+            bypassed_url = bypass_ouo(
                 url,
                 logger=logger,
                 impersonate=impersonate,
@@ -481,9 +491,7 @@ def bypass_ouo(
                     f"Received status code {status_code}. Waiting then retrying"
                 )
             else:
-                print(
-                    f"Received status code {status_code}. Waiting then retrying"
-                )
+                print(f"Received status code {status_code}. Waiting then retrying")
 
             time.sleep(10)
             bypassed_url = bypass_ouo(
