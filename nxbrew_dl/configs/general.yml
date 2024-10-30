@@ -7,13 +7,36 @@ dl_sites:
   - "MegaUp"
   - "MixDrop"
 
-dl_names:
+dl_mappings:
+
   Base Game:
-    - "Base Game"
+    tag_names:
+      - "Base Game"
+    directory_name: "Games"
+    dl_tags:
+      base_game_nsp:
+        dl_name_mapping: "Base Game (NSP)"
+      base_game_xci:
+        dl_name_mapping: "Base Game (XCI)"
+      base_game_undefined:
+        dl_name_mapping: "Base Game (Undefined)"
+
   Update:
-    - "Update"
+    tag_names:
+      - "Update"
+    directory_name: "Updates"
+    dl_tags:
+      update:
+        dl_name_mapping: "Update"
+
   DLC:
-    - "DLC"
+    tag_names:
+      - "DLC"
+      - "Multiplayer Pack"
+    directory_name: "DLC"
+    dl_tags:
+      dlc:
+        dl_name_mapping: "DLC"
 
 forbidden_titles:
   - "Latest RAW Game Updates [17th April 2024][47 New Updates] [DISCONTINUED]"
