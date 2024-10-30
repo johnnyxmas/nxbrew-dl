@@ -1,6 +1,7 @@
 import os
 import sys
 from functools import partial
+from myjdapi.exception import MYJDException
 
 from PySide6.QtCore import (
     Slot,
@@ -548,20 +549,19 @@ class NXBrewWorker(QObject):
     def run(self):
         """Run NXBrew-dl"""
 
-        nx = NXBrew(
-            to_download=self.to_download,
-            progress_bar=self.progress_bar,
-            progress_bar_label=self.progress_bar_label,
-            general_config=self.general_config,
-            regex_config=self.regex_config,
-            user_config=self.user_config,
-            user_cache=self.user_cache,
-            logger=self.logger,
-        )
-
         try:
+            nx = NXBrew(
+                to_download=self.to_download,
+                progress_bar=self.progress_bar,
+                progress_bar_label=self.progress_bar_label,
+                general_config=self.general_config,
+                regex_config=self.regex_config,
+                user_config=self.user_config,
+                user_cache=self.user_cache,
+                logger=self.logger,
+            )
             nx.run()
-        except Exception as e:
+        except (Exception, MYJDException) as e:
             self.logger.warning("Ran into error! Message is:")
             self.logger.warning(e.args[0])
 

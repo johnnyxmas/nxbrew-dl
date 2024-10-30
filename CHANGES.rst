@@ -1,6 +1,8 @@
 0.4 (Unreleased)
 ================
 
+- Catch MyJDAPI errors [#20]
+- Really fixed ouo de-shortener (please) [#20]
 - Add progress bar to GUI [#19]
 - Keep games list searchable even when downloads are running [#18]
 - If error occurs, don't crash GUI [#17]
