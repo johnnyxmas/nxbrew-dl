@@ -1,6 +1,7 @@
-0.4 (Unreleased)
+0.4 (2024-10-30)
 ================
 
+- Bump to v0.4 [#22]
 - Allow for generic base game [#21]
 - Catch MyJDAPI errors [#20]
 - Really fixed ouo de-shortener (please) [#20]
