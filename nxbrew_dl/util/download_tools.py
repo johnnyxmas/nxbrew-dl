@@ -414,14 +414,17 @@ def bypass_ouo(
 
         if logger is not None:
             logger.warning(f"Received status code {status_code}. Waiting then retrying")
+        else:
+            print(f"Received status code {status_code}. Waiting then retrying")
 
         time.sleep(10)
-        bypass_ouo(
+        bypassed_url = bypass_ouo(
             url,
             logger=logger,
             impersonate=impersonate,
             n_retry=n_retry + 1,
         )
+        return bypassed_url
 
     next_url = f"{p.scheme}://{p.hostname}/go/{temp_url_id}"
 
@@ -441,16 +444,20 @@ def bypass_ouo(
 
         # Catch problems here
         if inputs is None:
+
             if logger is not None:
                 logger.warning(f"Page load error. Waiting then retrying")
+            else:
+                print(f"Page load error. Waiting then retrying")
 
             time.sleep(10)
-            bypass_ouo(
+            bypassed_url =  bypass_ouo(
                 url,
                 logger=logger,
                 impersonate=impersonate,
                 n_retry=n_retry + 1,
             )
+            return bypassed_url
 
         data = {i.get("name"): i.get("value") for i in inputs}
         data["x-token"] = RecaptchaV3()
@@ -473,14 +480,19 @@ def bypass_ouo(
                 logger.warning(
                     f"Received status code {status_code}. Waiting then retrying"
                 )
+            else:
+                print(
+                    f"Received status code {status_code}. Waiting then retrying"
+                )
 
             time.sleep(10)
-            bypass_ouo(
+            bypassed_url = bypass_ouo(
                 url,
                 logger=logger,
                 impersonate=impersonate,
                 n_retry=n_retry + 1,
             )
+            return bypassed_url
 
         next_url = f"{p.scheme}://{p.hostname}/xreallcygo/{temp_url_id}"
 
