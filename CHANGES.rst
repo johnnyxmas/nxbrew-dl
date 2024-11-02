@@ -1,3 +1,10 @@
+0.5 (Unreleased)
+================
+
+- Skip weird phantom links [#24]
+- Include what types of files are being removed in the clean up [#24]
+- Strip extraneous whitespace from titles [#24]
+
 0.4 (2024-10-30)
 ================
 
