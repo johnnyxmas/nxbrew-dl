@@ -45,6 +45,9 @@ dependencies = [
     "PyYAML>=6.0.2",
 ]
 
+[project.scripts]
+nxbrew-dl = "nxbrew_dl:run_nxbrew_gui"
+
 [project.optional-dependencies]
 docs = [
     "sphinx>=8.1.0",
