@@ -8,7 +8,7 @@ double-click to get things running.
 
 NXBrew-dl can also be installed via pip: ::
 
-  pip install nxbrew_dl
+  pip install nxbrew-dl
 
 Or download the latest from GitHub: ::
 

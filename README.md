@@ -1,7 +1,7 @@
 # NXBrew-dl
 
-[![](https://img.shields.io/pypi/v/nxbrew_dl.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/nxbrew_dl/)
-[![](https://img.shields.io/pypi/pyversions/nxbrew_dl.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/nxbrew_dl/)
+[![](https://img.shields.io/pypi/v/nxbrew-dl.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/nxbrew-dl/)
+[![](https://img.shields.io/pypi/pyversions/nxbrew-dl.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/nxbrew-dl/)
 [![Docs](https://readthedocs.org/projects/nxbrew-dl/badge/?version=latest&style=flat-square)](https://nxbrew-dl.readthedocs.io/en/latest/)
 [![Actions](https://img.shields.io/github/actions/workflow/status/bbtufty/nxbrew-dl/build.yaml?branch=main&style=flat-square)](https://github.com/bbtufty/nxbrew-dl/actions)
 [![License](https://img.shields.io/badge/license-GNUv3-blue.svg?label=License&style=flat-square)](LICENSE)
@@ -19,7 +19,7 @@ We recommend using the executable version. You can grab the latest release from 
 
 Alternatively, you can install via pip:
 ```shell
-pip install nxbrew_dl
+pip install nxbrew-dl
 ```
 Or download the latest from GitHub:
 ```shell
