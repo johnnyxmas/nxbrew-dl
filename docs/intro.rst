@@ -2,6 +2,10 @@
 NXBrew-dl
 #########
 
+.. image:: https://img.shields.io/pypi/v/nxbrew_dl.svg?label=PyPI&style=flat-square
+    :target: https://pypi.org/pypi/nxbrew_dl/
+.. image:: https://img.shields.io/pypi/pyversions/nxbrew_dl.svg?label=Python&color=yellow&style=flat-square
+    :target: https://pypi.org/pypi/nxbrew_dl/
 .. image:: https://img.shields.io/github/actions/workflow/status/bbtufty/nxbrew-dl/build.yaml?branch=main&style=flat-square
     :target: https://github.com/bbtufty/nxbrew-dl/actions
 .. image:: https://readthedocs.org/projects/nxbrew-dl/badge/?version=latest&style=flat-square

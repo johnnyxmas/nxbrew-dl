@@ -1,6 +1,9 @@
 0.5 (Unreleased)
 ================
 
+- Add PyPI action to GH actions
+- Bundle GUI script for GitHub version [#26]
+- Package for pip [#26]
 - Unify link parsing and make more general [#25]
 - Fix crash if no suitable releases found [#25]
 - Skip weird phantom links [#24]
