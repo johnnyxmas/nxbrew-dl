@@ -19,7 +19,7 @@ We recommend using the executable version. You can grab the latest release from 
 
 Alternatively, you can install via pip:
 ```shell
-pip install nxbrew-dl
+pip install nxbrew_dl
 ```
 Or download the latest from GitHub:
 ```shell

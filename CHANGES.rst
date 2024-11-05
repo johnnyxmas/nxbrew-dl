@@ -1,7 +1,8 @@
-0.5 (Unreleased)
+0.5 (2024-11-05)
 ================
 
-- Add PyPI action to GH actions
+- Bump to v0.5 [#27]
+- Add PyPI action to GH actions [#26]
 - Bundle GUI script for GitHub version [#26]
 - Package for pip [#26]
 - Unify link parsing and make more general [#25]
