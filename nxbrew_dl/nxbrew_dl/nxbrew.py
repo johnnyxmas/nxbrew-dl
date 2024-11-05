@@ -379,6 +379,13 @@ class NXBrew:
                     "Multiple suitable releases found. Unsure how to deal with this right now"
                 )
 
+        if len(dl_dict) == 0:
+            self.logger.warning(
+                "No suitable releases found (consider changing language/region preferences). "
+                "Will skip"
+            )
+            return False
+
         # Trim down to just one ROM
         release = list(dl_dict.keys())[0]
         dl_dict = dl_dict[release]

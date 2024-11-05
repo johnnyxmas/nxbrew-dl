@@ -1,6 +1,8 @@
 0.5 (Unreleased)
 ================
 
+- Unify link parsing and make more general [#25]
+- Fix crash if no suitable releases found [#25]
 - Skip weird phantom links [#24]
 - Include what types of files are being removed in the clean up [#24]
 - Strip extraneous whitespace from titles [#24]

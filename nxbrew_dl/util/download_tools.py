@@ -1,3 +1,4 @@
+import copy
 import random
 import re
 import time
@@ -138,40 +139,36 @@ def get_dl_dict(
 
                 if any([n in tag_no_brackets for n in tag_names]):
 
-                    if dl_mapping == "Base Game":
-                        tag, parsed_dict = parse_base_game(
+                    if dl_mapping in ["Base Game", "DLC", "Update"]:
+                        tag, parsed_dict = parse_dl_tags(
                             tag,
+                            dict_key=dl_mapping.lower(),
                             dl_sites=dl_sites,
                             dl_mappings=dl_mappings,
-                        )
-                    elif dl_mapping == "DLC":
-                        tag, parsed_dict = parse_inline(
-                            tag,
-                            key="dlc",
-                            dl_sites=dl_sites,
-                        )
-                    elif dl_mapping == "Update":
-                        tag, parsed_dict = parse_inline(
-                            tag, key="update", dl_sites=dl_sites
                         )
                     else:
                         raise ValueError(
                             f"Name should contain one of: {', '.join(dl_mappings.keys())}. Got {tag.text}"
                         )
 
-                    # Get out the key, and append to the full dictionary
-                    parsed_keys = list(parsed_dict.keys())
+                    # If we don't have an empty dictionary, add things in now
+                    if len(parsed_dict) > 0:
 
-                    for parsed_key in parsed_keys:
-                        if parsed_key not in dl_dict[current_release]:
-                            dl_dict[current_release][parsed_key] = []
+                        # Get out the key, and append to the full dictionary
+                        parsed_keys = list(parsed_dict.keys())
 
-                        # Strip any extraneous whitespace
-                        parsed_dict[parsed_key]["full_name"] = parsed_dict[parsed_key]["full_name"].strip()
+                        for parsed_key in parsed_keys:
+                            if parsed_key not in dl_dict[current_release]:
+                                dl_dict[current_release][parsed_key] = []
 
-                        dl_dict[current_release][parsed_key].append(
-                            parsed_dict[parsed_key]
-                        )
+                            # Strip any extraneous whitespace
+                            parsed_dict[parsed_key]["full_name"] = parsed_dict[
+                                parsed_key
+                            ]["full_name"].strip()
+
+                            dl_dict[current_release][parsed_key].append(
+                                parsed_dict[parsed_key]
+                            )
 
                     found_anything_dl = True
 
@@ -235,52 +232,57 @@ def parse_language_tag(tag, languages=None):
     return parsed_languages
 
 
-def parse_base_game(
+def parse_dl_tags(
     tag,
+    dict_key,
     dl_sites,
     dl_mappings,
 ):
-    """Parse out links for base game
+    """Parse out links for games, updates, and DLC
 
-    These are often spread over multiple paragraphs,
-    so keep hunting!
+    These can either be spread out over paragraphs or inline,
+    so we distinguish between those cases here
 
     Args:
         tag (bs4.Tag): starting tag object
+        dict_key (str): key to distinguish different file types
         dl_sites (list): list of DL sites to look for in links
         dl_mappings (dict): Dictionary of names to map to download types
     """
 
-    base_game_dict = {}
+    link_dict = {}
 
-    # Catch NSPs/XCIs (most common), and undefined names (occasional),
-    # error out for others
     t = tag.text
 
-    if "NSP" in t and "XCI" not in t:
-        game_dict_key = "base_game_nsp"
-    elif "XCI" in t and "NSP" not in t:
-        game_dict_key = "base_game_xci"
-    elif "NSP" not in t and "XCI" not in t:
-        game_dict_key = "base_game_undefined"
-    elif "NSP" in t and "XCI" in t:
-        raise ValueError(f"Name {t} implies both NSP *and* XCI!")
+    # Start by distinguishing whether we're a base game or something else
+    if dict_key == "base game":
+        if "NSP" in t and "XCI" not in t:
+            link_dict_key = "base_game_nsp"
+        elif "XCI" in t and "NSP" not in t:
+            link_dict_key = "base_game_xci"
+        elif "NSP" not in t and "XCI" not in t:
+            link_dict_key = "base_game_undefined"
+        elif "NSP" in t and "XCI" in t:
+            raise ValueError(f"Name {t} implies both NSP *and* XCI!")
+        else:
+            raise ValueError(f"Unsure how to parse Base Game name: {t}")
     else:
-        raise ValueError(f"Unsure how to parse Base Game name: {t}")
+        link_dict_key = copy.deepcopy(dict_key)
 
-    base_game_dict[game_dict_key] = {}
-
-    base_game_dict[game_dict_key]["full_name"] = tag.text
+    link_dict[link_dict_key] = {}
+    link_dict[link_dict_key]["full_name"] = t
 
     # Loop until we're no longer finding links
     finding_links = True
     while finding_links:
         found_site = False
         tag = tag.find_next("p")
+        t = tag.text
 
+        site = None
         for site in dl_sites:
-            if site in tag.text:
-                base_game_dict[game_dict_key][site] = []
+            if site in t:
+                link_dict[link_dict_key][site] = []
                 found_site = True
                 break
 
@@ -288,84 +290,70 @@ def parse_base_game(
             # Find all the hrefs
             href = tag.find_all("a", href=True)
 
-            # There's an edge case here where sometimes the base game actually has everything in there
+            # There can be inline tags, where the link is the download site name
+            found_inline = False
+
             for h in href:
+                ht = h.text
 
-                # If there's some weird phantom link, skip
-                if h.text == "":
-                    continue
+                for inline_site in dl_sites:
+                    if inline_site in ht:
 
-                found_edge_case = False
+                        if inline_site not in link_dict[link_dict_key]:
+                            link_dict[link_dict_key][inline_site] = []
 
-                for dl_mapping in dl_mappings:
+                        link_dict[link_dict_key][inline_site].append(h["href"])
 
-                    tag_names = dl_mappings[dl_mapping]["tag_names"]
-
-                    if any([n in h.text for n in tag_names]):
-
-                        if dl_mapping not in base_game_dict:
-                            base_game_dict[dl_mapping.lower()] = {}
-                            base_game_dict[dl_mapping.lower()]["full_name"] = h.text
-                            base_game_dict[dl_mapping.lower()][site] = []
-                        base_game_dict[dl_mapping.lower()][site].append(h["href"])
-
-                        found_edge_case = True
+                        found_inline = True
                         break
 
-                if not found_edge_case:
-                    base_game_dict[game_dict_key][site].append(h["href"])
+            # Otherwise, parse out the text and go from there
+            if not found_inline:
+
+                for h in href:
+                    ht = h.text
+
+                    # If there's some weird phantom link, skip
+                    if ht == "":
+                        continue
+
+                    # There's an edge case here where the "base game" can actually have everything in there
+                    found_all_in_one = False
+
+                    for dl_mapping in dl_mappings:
+
+                        tag_names = dl_mappings[dl_mapping]["tag_names"]
+
+                        if any([n in ht for n in tag_names]):
+
+                            if dl_mapping not in link_dict:
+                                link_dict[dl_mapping.lower()] = {}
+                                link_dict[dl_mapping.lower()]["full_name"] = ht
+                                link_dict[dl_mapping.lower()][site] = []
+                            link_dict[dl_mapping.lower()][site].append(h["href"])
+
+                            found_all_in_one = True
+                            break
+
+                    # If we just have a link, put that in now
+                    if not found_all_in_one:
+                        link_dict[link_dict_key][site].append(h["href"])
+
         else:
             finding_links = False
 
     # Finally, hunt through to the next tag WITHOUT a link in
     found_links = True
     while found_links:
-        tag = tag.find_next("p", href=False)
         links = tag.find_all("a", href=True)
         if len(links) == 0:
             found_links = False
+        else:
+            tag = tag.find_next("p", href=False)
 
-    return tag, base_game_dict
-
-
-def parse_inline(
-    tag,
-    key,
-    dl_sites,
-):
-    """Parse in-line links
-
-    Args:
-        tag (soup.tag): Starting tag
-        key (str): Type of links (e.g. DLC, Update)
-        dl_sites (list): list of DL sites to look for in links
-    """
-
-    link_dict = {key: {}}
-    link_dict[key]["full_name"] = tag.text
-
-    # DLCs are always in-line, I think
-    tag = tag.find_next("p")
-    href = tag.find_all("a", href=True)
-
-    for h in href:
-
-        # If there's some weird phantom link, skip
-        if h.text == "":
-            continue
-
-        for site in dl_sites:
-            if site in h.text:
-
-                if site not in link_dict[key]:
-                    link_dict[key][site] = []
-
-                link_dict[key][site].append(h["href"])
-
-                break
-
-    # Finally, hunt through to the next tag WITHOUT a link in
-    tag = tag.find_next("p", href=False)
+    # If we only have a name in here, then clear out the dictionary and leave
+    if len(link_dict[link_dict_key]) == 1:
+        link_dict = {}
 
     return tag, link_dict
 
