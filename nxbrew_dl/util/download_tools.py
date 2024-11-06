@@ -506,3 +506,88 @@ def bypass_ouo(
         next_url = f"{p.scheme}://{p.hostname}/xreallcygo/{temp_url_id}"
 
     return res.headers.get("Location")
+
+def bypass_1link(
+    url,
+    logger=None,
+    impersonate=None,
+    n_retry=0,
+    max_retries=5,
+):
+    """Bypass 1link url
+
+    Args:
+        url (str): URL to bypass
+        logger (logging.Logger): Logger to use. Defaults to None,
+            which will not log anything
+        impersonate (str): Type of browser to impersonate. Defaults
+            to None, which will choose randomly from a selection
+        n_retry (int): Current retry. Defaults to 0
+        max_retries (int): Maximum number of retries. Defaults to 5
+    """
+
+    if n_retry >= max_retries:
+        raise ValueError("Max retries exceeded!")
+
+    if impersonate is None:
+        impersonate = random.choice(["chrome", "safari", "edge"])
+
+    client = cffi_requests.Session()
+    client.headers.update(
+        {
+            "authority": "ouo.io",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "cache-control": "max-age=0",
+            "referer": "http://www.google.com/ig/adde?moduleurl=",
+            "upgrade-insecure-requests": "1",
+        }
+    )
+
+    res = client.get(url, impersonate=impersonate)
+
+    # If we get a weird response, try again
+    status_code = res.status_code
+    if status_code not in [200, 302, 307]:
+
+        if logger is not None:
+            logger.warning(f"Received status code {status_code}. Waiting then retrying")
+        else:
+            print(f"Received status code {status_code}. Waiting then retrying")
+
+        time.sleep(10)
+        bypassed_url = bypass_1link(
+            url,
+            logger=logger,
+            impersonate=impersonate,
+            n_retry=n_retry + 1,
+        )
+        return bypassed_url
+
+    # Parse soup, pull out the download link from the button
+    bs4 = BeautifulSoup(res.content, "lxml")
+    dl_link = bs4.find_all("a", attrs={"id": "download"})[0]
+    next_url = dl_link["href"]
+
+    # Get that next URL, disallowing redirects
+    res = client.get(next_url, impersonate=impersonate, allow_redirects=False)
+
+    # If we get a weird response, try again
+    status_code = res.status_code
+    if status_code not in [200, 302, 307]:
+
+        if logger is not None:
+            logger.warning(f"Received status code {status_code}. Waiting then retrying")
+        else:
+            print(f"Received status code {status_code}. Waiting then retrying")
+
+        time.sleep(10)
+        bypassed_url = bypass_1link(
+            url,
+            logger=logger,
+            impersonate=impersonate,
+            n_retry=n_retry + 1,
+        )
+        return bypassed_url
+
+    return res.headers.get("Location")
