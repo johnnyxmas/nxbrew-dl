@@ -19,6 +19,7 @@ from ..util import (
     get_thumb_url,
     get_dl_dict,
     bypass_ouo,
+    bypass_1link,
 )
 
 
@@ -584,9 +585,14 @@ class NXBrew:
                     self.logger.info(f"\t\t\tLink: {d}")
                     if "ouo" in d:
                         self.logger.info(
-                            f"\t\t\t\t{d} detected as shortened link. Will bypass"
+                            f"\t\t\t\t{d} detected as OUO shortened link. Will bypass"
                         )
                         d_final = bypass_ouo(d, logger=self.logger)
+                    elif "1link" in d:
+                        self.logger.info(
+                            f"\t\t\t\t{d} detected as 1link shortened link. Will bypass"
+                        )
+                        d_final = bypass_1link(d, logger=self.logger)
                     else:
                         d_final = copy.deepcopy(d)
 
