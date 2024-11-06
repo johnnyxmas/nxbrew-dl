@@ -1,6 +1,7 @@
 0.6 (Unreleased)
 ================
 
+- Improve error logging [#29]
 - Bypass 1link.club links [#28]
 
 0.5 (2024-11-05)
