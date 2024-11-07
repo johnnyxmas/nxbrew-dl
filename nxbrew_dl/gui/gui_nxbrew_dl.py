@@ -1,7 +1,7 @@
 import os
 import sys
+import traceback
 from functools import partial
-from myjdapi.exception import MYJDException
 
 from PySide6.QtCore import (
     Slot,
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QFileDialog,
 )
+from myjdapi.exception import MYJDException
 from packaging.version import Version
 
 import nxbrew_dl
@@ -561,8 +562,10 @@ class NXBrewWorker(QObject):
                 logger=self.logger,
             )
             nx.run()
-        except (Exception, MYJDException) as e:
-            self.logger.warning("Ran into error! Message is:")
-            self.logger.warning(e.args[0])
+        except (Exception, MYJDException):
+
+            tb = traceback.format_exc()
+            for line in tb.splitlines():
+                self.logger.warning(line)
 
         self.finished.emit()
