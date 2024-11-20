@@ -1,6 +1,7 @@
 0.6 (Unreleased)
 ================
 
+- Made cache URL agnostic [#30]
 - Improve error logging [#29]
 - Bypass 1link.club links [#28]
 
