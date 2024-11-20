@@ -2,6 +2,7 @@ import copy
 import os
 import shutil
 import time
+from urllib.parse import urlparse
 
 import myjdapi
 import numpy as np
@@ -430,15 +431,30 @@ class NXBrew:
             self.logger.info("Dry run, will not download anything")
             return True
 
+        # If we've updated URLs, check for that here and update as appropriate
+        if url not in self.user_cache:
+            url_path = urlparse(url).path
+            for cache_url in self.user_cache:
+                cache_url_path = urlparse(cache_url).path
+
+                # If we match, rename and delete
+                if url_path == cache_url_path:
+                    self.user_cache[url] = self.user_cache[cache_url]
+                    del self.user_cache[cache_url]
+                    break
+
         # Add unique URL to cache if it's not already there
         if url not in self.user_cache:
             self.logger.debug(f"Adding {name} to cache")
             self.user_cache[url] = {}
             self.user_cache[url]["name"] = name
 
-        # Add thumbnail URL to cache if it's not already there
+        # Add thumbnail URL to cache if it's not already there, or potentially update
         if "thumb_url" not in self.user_cache[url]:
             self.logger.debug("Adding thumbnail URL to cache")
+            self.user_cache[url]["thumb_url"] = thumb_url
+        if self.user_cache[url]["thumb_url"] != thumb_url:
+            self.logger.debug("Updating thumbnail URL")
             self.user_cache[url]["thumb_url"] = thumb_url
 
         # Hooray! We're finally ready to start downloading. Map things to folder and let's get going

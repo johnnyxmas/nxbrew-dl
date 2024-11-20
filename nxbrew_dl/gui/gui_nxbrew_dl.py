@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 from functools import partial
+from urllib.parse import urlparse
 
 from PySide6.QtCore import (
     Slot,
@@ -258,8 +259,14 @@ class MainWindow(QMainWindow):
         # If in cache, check the row here
         for cache_item in self.user_cache:
             found_cache_item = False
+
+            cache_item_path = urlparse(cache_item).path
+
             for r in range(self.game_table.rowCount()):
-                if self.game_table.item(r, 0).toolTip() == cache_item:
+
+                table_item_path = urlparse(self.game_table.item(r, 0).toolTip()).path
+
+                if table_item_path == cache_item_path:
                     self.game_table.item(r, 1).setCheckState(Qt.CheckState.Checked)
                     found_cache_item = True
                     break
