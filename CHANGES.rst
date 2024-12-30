@@ -1,6 +1,7 @@
 0.6 (Unreleased)
 ================
 
+- Fix crash if NXBrew URL is invalid [#42]
 - Use exact versions in pyproject [#32]
 - Edit GH actions to run on main [#31]
 - Made cache URL agnostic [#30]

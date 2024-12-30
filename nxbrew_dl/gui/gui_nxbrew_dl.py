@@ -4,6 +4,7 @@ import traceback
 from functools import partial
 from urllib.parse import urlparse
 
+import requests
 from PySide6.QtCore import (
     Slot,
     Signal,
@@ -211,11 +212,26 @@ class MainWindow(QMainWindow):
             )
             return False
 
-        self.game_dict = get_game_dict(
-            general_config=self.general_config,
-            regex_config=self.regex_config,
-            nxbrew_url=self.user_config["nxbrew_url"],
-        )
+        try:
+            _ = requests.get(self.user_config["nxbrew_url"])
+        except (requests.exceptions.SSLError, requests.exceptions.MissingSchema) as e:
+            self.logger.warning(
+                "Error found in NXBrew URL! Enter one that works and refresh the game list!"
+            )
+            return False
+
+        try:
+            self.game_dict = get_game_dict(
+                general_config=self.general_config,
+                regex_config=self.regex_config,
+                nxbrew_url=self.user_config["nxbrew_url"],
+            )
+        except Exception as e:
+            self.logger.warning(
+                "Error found retreiving game list, try another URL"
+            )
+            return False
+
 
     def update_display(self, text):
         """When using the search bar, show/hide rows
