@@ -1,6 +1,7 @@
-0.6 (Unreleased)
+0.6 (2024-12-30)
 ================
 
+- Bumpy to v0.6 [#43]
 - Fix crash if NXBrew URL is invalid [#42]
 - Use exact versions in pyproject [#32]
 - Edit GH actions to run on main [#31]
