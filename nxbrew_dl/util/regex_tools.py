@@ -16,19 +16,19 @@ def get_game_name(
     # various other possibilities. Search for "Switch" (with optional NSP/XCI variations), "Cloud Version", "eShop",
     # "Switch +, "+ Update", and "+ DLC"
     regex_str = (
-        "^.*?"
-        "(?="
+        r"^.*?"
+        r"(?="
         f"(?:\\s?Swi(?:tc|ct)h)?\\s(?:\\(?{'|'.join(nsp_xci_variations)})\\)?"
         "|"
-        "(?:\\s[-|–]\\sCloud Version)"
+        r"(?:\\s[-|–]\\sCloud Version)"
         "|"
-        "(?:\(eShop\))"
+        r"(?:\(eShop\))"
         "|"
-        "(?:\\s?Switch\\s\+)"
+        r"(?:\\s?Switch\\s\+)"
         "|"
-        "(?:\\s?\+\\sUpdate)"
+        r"(?:\\s?\+\\sUpdate)"
         "|"
-        "(?:\\s?\+\\sDLC)"
+        r"(?:\\s?\+\\sDLC)"
         ")"
     )
 
@@ -101,5 +101,7 @@ def parse_languages(
             long_match = re.match(long_langs[i], fs, flags=re.NOFLAG)
             if long_match:
                 langs.append(long_langs[i])
+
+    reg = re.findall(r"\[(.*?)\]", t)
 
     return langs
