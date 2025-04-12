@@ -25,7 +25,7 @@ Or download the latest from GitHub:
 ```shell
 git clone https://github.com/bbtufty/nxbrew-dl.git
 cd nxbrew-dl
-pip install -e .
+pip install -e . -r requirements.txt
 ```
 If you use these versions, you can then run from the terminal as:
 ```shell

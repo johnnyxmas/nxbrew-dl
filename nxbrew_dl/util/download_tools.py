@@ -217,7 +217,7 @@ def parse_language_tag(tag, languages=None):
     # Figure out if we have anything here. It should be between square brackets
     t = tag.text
 
-    reg = re.findall("\[(.*?)\]", t)
+    reg = re.findall(r"\[(.*?)\]", t)
 
     # Loop over everything, and if we match then return
     parsed_languages = []
@@ -365,7 +365,7 @@ def RecaptchaV3():
     post_data = "v={}&reason=q&c={}&k={}&co={}"
     client = requests.Session()
     client.headers.update({"content-type": "application/x-www-form-urlencoded"})
-    matches = re.findall("([api2|enterprise]+)\/anchor\?(.*)", ANCHOR_URL)[0]
+    matches = re.findall(r"([api2|enterprise]+)/anchor\?(.*)", ANCHOR_URL)[0]
     url_base += matches[0] + "/"
     params = matches[1]
     res = client.get(url_base + "anchor", params=params)
