@@ -569,25 +569,39 @@ def bypass_1link(
     dl_link = bs4.find_all("a", attrs={"id": "download"})[0]
     next_url = dl_link["href"]
 
-    # Get that next URL, disallowing redirects
-    res = client.get(next_url, impersonate=impersonate, allow_redirects=False)
+    # If we're now redirecting through to OUO, then do that here
+    if "ouo" in next_url:
+        link = bypass_ouo(next_url,
+                          logger=logger,
+                          impersonate=impersonate,
+                          n_retry=n_retry,
+                          max_retries=max_retries,
+                          )
 
-    # If we get a weird response, try again
-    status_code = res.status_code
-    if status_code not in [200, 302, 307]:
+    # Otherwise work as normal
+    else:
 
-        if logger is not None:
-            logger.warning(f"Received status code {status_code}. Waiting then retrying")
-        else:
-            print(f"Received status code {status_code}. Waiting then retrying")
+        # Get that next URL, disallowing redirects
+        res = client.get(next_url, impersonate=impersonate, allow_redirects=False)
 
-        time.sleep(10)
-        bypassed_url = bypass_1link(
-            url,
-            logger=logger,
-            impersonate=impersonate,
-            n_retry=n_retry + 1,
-        )
-        return bypassed_url
+        # If we get a weird response, try again
+        status_code = res.status_code
+        if status_code not in [200, 302, 307]:
 
-    return res.headers.get("Location")
+            if logger is not None:
+                logger.warning(f"Received status code {status_code}. Waiting then retrying")
+            else:
+                print(f"Received status code {status_code}. Waiting then retrying")
+
+            time.sleep(10)
+            bypassed_url = bypass_1link(
+                url,
+                logger=logger,
+                impersonate=impersonate,
+                n_retry=n_retry + 1,
+            )
+            return bypassed_url
+
+        link = res.headers.get("Location")
+
+    return link

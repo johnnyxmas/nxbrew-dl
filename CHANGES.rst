@@ -1,3 +1,11 @@
+0.7 (Unreleased)
+================
+
+- Fix crash if 1link redirects to ouo
+- Fix bug where not all links get added to JDownloader
+- Fixed improper escape characters in regex tools
+- Added requirements.txt
+
 0.6 (2024-12-30)
 ================
 
