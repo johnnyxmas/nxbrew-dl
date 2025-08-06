@@ -1,6 +1,7 @@
 0.7 (Unreleased)
 ================
 
+- Disable MegaUp as a download site
 - Fix crash if 1link redirects to ouo
 - Fix bug where not all links get added to JDownloader
 - Fixed improper escape characters in regex tools

@@ -589,6 +589,11 @@ class NXBrew:
 
         # Loop over download sites, hit the first one we find
         for dl_site in self.general_config["dl_sites"]:
+
+            if dl_site in self.general_config["dl_sites_no_jdownload"]:
+                self.logger.info(f"JDownloader does not support {dl_site}, skipping")
+                continue
+
             if dl_site in dl_dict:
                 dl_links = dl_dict[dl_site]
                 self.logger.info(f"\t\tTrying {dl_site}:")
