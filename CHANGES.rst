@@ -1,4 +1,4 @@
-0.7 (Unreleased)
+0.7 (2025-08-06)
 ================
 
 - Add new download sites [#85]
