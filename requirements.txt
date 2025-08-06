@@ -21,7 +21,7 @@ PyYAML==6.0.2
 requests==2.32.3
 setuptools==80.7.1
 shiboken6==6.8.1
-soupsieve==2.6
+soupsieve==2.7
 typing_extensions==4.13.2
 urllib3==2.4.0
 wheel==0.45.1
