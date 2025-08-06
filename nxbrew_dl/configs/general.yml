@@ -1,6 +1,8 @@
 dl_sites:
+  - "DataNodes"
   - "1Fichier"
   - "FreeDL"
+  - "MultiUp"
   - "GoFile"
   - "HexLoad"
   - "HexUpload"
