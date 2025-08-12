@@ -632,6 +632,21 @@ class NXBrew:
                         ]
                     )
 
+                # Check that the package has been added
+                package_added = False
+                while not package_added:
+                    time.sleep(1)
+
+                    package_list = self.jd_device.linkgrabber.query_packages()
+
+                    for p in package_list:
+
+                        if package_added:
+                            continue
+
+                        if p["name"] == package_name:
+                            package_added = True
+
                 # Check that all links have been added
                 all_added = False
                 while not all_added:
@@ -649,9 +664,6 @@ class NXBrew:
                         if p["name"] == package_name:
                             child_count = p["childCount"]
                             found_package = True
-
-                    if not found_package:
-                        raise ValueError("Could not find package!")
 
                     if child_count == len(dl_links):
                         all_added = True

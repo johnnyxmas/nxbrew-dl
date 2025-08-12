@@ -1,3 +1,8 @@
+0.8 (Unreleased)
+================
+
+- Fixed "Could not find package!" bug [#94]
+
 0.7 (2025-08-06)
 ================
 
