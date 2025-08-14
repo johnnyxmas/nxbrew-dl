@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import traceback
 from functools import partial
 from urllib.parse import urlparse
@@ -590,5 +591,8 @@ class NXBrewWorker(QObject):
             tb = traceback.format_exc()
             for line in tb.splitlines():
                 self.logger.warning(line)
+
+        # Sleep a little to avoid potential hangups
+        time.sleep(1)
 
         self.finished.emit()

@@ -1,3 +1,10 @@
+0.7.2 (2025-08-14)
+==================
+
+- Fix GUI hanging on completion [#97]
+- Ensure we only remove the specific package from JDownloader [#97]
+- Move DataNodes down priority list [#97]
+
 0.7.1 (2025-08-12)
 ==================
 
