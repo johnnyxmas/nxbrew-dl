@@ -206,6 +206,8 @@ class NXBrew:
         self.logger.info("All done!")
         self.logger.info("")
 
+        return True
+
     def download_game(
         self,
         name,
@@ -779,7 +781,7 @@ class NXBrew:
         self.jd_device.downloads.cleanup(
             action="DELETE_FINISHED",
             mode="REMOVE_LINKS_ONLY",
-            selection_type="ALL",
+            selection_type="SELECTED",
             package_ids=[package_id],
         )
 
