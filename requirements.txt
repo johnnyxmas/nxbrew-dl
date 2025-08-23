@@ -9,7 +9,7 @@ discordwebhook==1.0.3
 idna==3.10
 logredactor==0.0.2
 lxml==6.0.0
-myjdapi==1.1.9
+myjdapi==1.1.10
 numpy==2.3.2
 pathvalidate==3.2.3
 pycparser==2.22
