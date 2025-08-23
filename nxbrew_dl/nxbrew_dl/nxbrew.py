@@ -729,10 +729,12 @@ class NXBrew:
                 package_id = p["uuid"]
                 break
 
+        # If everything's offline, then we'll fail here, so warn and return
         if package_id is None:
-            raise ValueError(
+            self.logger.warning(
                 f"Did not find associated package with name {package_name}"
             )
+            return True
 
         # Query status occasionally, to make sure the download is complete and
         # extraction is done
