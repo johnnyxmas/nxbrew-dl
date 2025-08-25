@@ -1,3 +1,8 @@
+0.7.3 (Unreleased)
+==================
+
+- Fix crash when all links offline [#105]
+
 0.7.2 (2025-08-14)
 ==================
 
