@@ -1,6 +1,7 @@
-0.7.3 (Unreleased)
+0.7.3 (2025-11-03)
 ==================
 
+- Update Qt libraries
 - Fix crash when all links offline [#105]
 
 0.7.2 (2025-08-14)
